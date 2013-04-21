@@ -10,6 +10,25 @@ void InitClk(void)
 	PLLFBD = 38;				// Multiply by 40 for 160MHz VCO output (8MHz XT oscillator)
 	CLKDIV = 0x0000;			// FRC: divide by 2, PLLPOST: divide by 2, PLLPRE: divide by 2
 }
+// Init Clock Par Mouly 
+//FCY = 40MHz 
+void Init_Clk(void)
+{
+	
+	//External OSC  8MHz
+	//Internal PLL  80MHz Fcy = 40MHz
+	
+	PLLFBD=41; 								// M = PLLFBD + 2 
+	CLKDIVbits.PLLPOST=0;   				// N1 = 2 
+	CLKDIVbits.PLLPRE=0;    				// N2 = 2
+
+	__builtin_write_OSCCONH(0x01);			// New Oscillator FRC w/ PLL 
+    __builtin_write_OSCCONL(0x01);  		// Enable Switch 
+	
+	while(OSCCONbits.COSC != 0b001);		// Wait for new Oscillator to become FRC w/ PLL 
+    while(OSCCONbits.LOCK != 1);			// Wait for Pll to Lock 
+    
+}
 void InitPWM(void)
 {
 	P1TCONbits.PTEN = 1; 		// PWM Time base is On

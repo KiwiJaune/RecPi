@@ -9,6 +9,16 @@
 #include <uart.h>
 #include <math.h>
 #include "OurFiles/Pilotage.h"
+#include "OurFiles/CDS5516.h"
+#include "OurFiles/FonctionsUc.h"
+
+// Configuration Clock Par Mouly
+_FOSCSEL(FNOSC_FRC)
+_FOSC(FCKSM_CSECMD & OSCIOFNC_ON)
+_FPOR(FPWRT_PWR1)
+_FWDT(FWDTEN_OFF)// & SWDTEN_OFF)
+_FICD(ICS_PGD3 & JTAGEN_OFF)
+
 
 // TODO list
 // * Self-calibration de l'odométrie
@@ -90,7 +100,6 @@ int main(void)
 	envoiDistance.message = messdistance;
 	envoiDistance.nbChar = 4;
 	
-	
 	Trame envoiBlocage;
 	static BYTE messblocage[2];
 	messblocage[0] = 0xC1;
@@ -107,43 +116,55 @@ int main(void)
 
 	Trame trame;	
 	
-	InitClk(); 		// Initialisation de l'horloge
-	InitPorts(); 	// Initialisation des ports E/S
-	InitQEI(); 		// Initialisation des entrées en quadrature
-	InitPWM();		// Configuration du module PWM 
-	InitT2();		// Configuration du timer 2	
-	InitADC();
-	InitDMA();
-	InitProp();
+	Init_Clk();
+	//InitClk(); 		// Initialisation de l'horloge
+//	InitPorts(); 	// Initialisation des ports E/S
+		//Configuration des ports pour la liaison UART2 des CDS
+	RPINR19bits.U2RXR	= 24;	// Rx	<==> RP24-RC8
+	TRISCbits.TRISC9 	= 0;
+	RPOR12bits.RP25R	= 0b00101;	// Tx	<==> RP25-RC9
 	
-	// Initialize stack-related hardware components that may be 
-	// required by the UART configuration routines
-    TickInit();
-	#if defined(STACK_USE_MPFS) || defined(STACK_USE_MPFS2)
-	MPFSInit();
-	#endif
+//	InitQEI(); 		// Initialisation des entrées en quadrature
+//	InitPWM();		// Configuration du module PWM 
+//	InitT2();		// Configuration du timer 2	
+////	InitADC();
+////	InitDMA();
+////	InitProp();
+//	
+//	// Initialize stack-related hardware components that may be 
+//	// required by the UART configuration routines
+//    TickInit();
+//	#if defined(STACK_USE_MPFS) || defined(STACK_USE_MPFS2)
+//	MPFSInit();
+//	#endif
+//	
+//	// Initialize Stack and application related NV variables into AppConfig.
+//	InitAppConfig();
+//	
+//	UDPInit();
+//    StackInit();	
+// 	UDPPerformanceTask();
+//	InitUserUdp();
+//	
+//	//INTERRUPT PRIORITY
+//	IPC4bits.SI2C1IP = 7;
+//	IPC1bits.T2IP = 1; // 4
+//	IPC14bits.QEI1IP = 5;
+//	IPC18bits.QEI2IP = 5;								
+//
+//	demo=4;
+//
+//	hold_blocage=0;
 	
-	// Initialize Stack and application related NV variables into AppConfig.
-	InitAppConfig();
-	
-	UDPInit();
-    StackInit();	
- 	UDPPerformanceTask();
-	InitUserUdp();
-	
-	//INTERRUPT PRIORITY
-	IPC4bits.SI2C1IP = 7;
-	IPC1bits.T2IP = 1; // 4
-	IPC14bits.QEI1IP = 5;
-	IPC18bits.QEI2IP = 5;								
-
-	demo=4;
-
-	hold_blocage=0;
-	
-	//pwm(GAUCHE,-500);
-	//pwm(DROITE,500);
-	//while(1);
+//	pwm(GAUCHE,-1000);
+//	pwm(DROITE,1000);
+// Initialisation de la liaison série 2 (UART2)
+	InitUART2();
+	while(1)
+	{
+		CDS5516Pos(19100,254,255);
+	}
+//	while(1);
 	
 	while(1)
     {	

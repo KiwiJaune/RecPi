@@ -64,9 +64,12 @@
 #if defined(THIS_IS_STACK_APPLICATION)
 	#if defined(__dsPIC33F__)
 		// Explorer 16 board
-		_FOSCSEL(FNOSC_PRIPLL)			// PLL enabled
-		_FOSC(OSCIOFNC_OFF & POSCMD_XT)	// XT Osc
-		_FWDT(FWDTEN_OFF)				// Disable Watchdog timer
+//		_FOSCSEL(FNOSC_PRIPLL)			// PLL enabled
+//		_FOSC(OSCIOFNC_OFF & POSCMD_XT)	// XT Osc
+//		_FWDT(FWDTEN_OFF)				// Disable Watchdog timer
+//			
+//    	_FICD (ICS_PGD3)              // ICD Pin Placement Select bits (EMUC/EMUD share PGC3/PGD3)
+//
 		// JTAG should be disabled as well
 	#endif
 #endif // Prevent more than one set of config fuse definitions
