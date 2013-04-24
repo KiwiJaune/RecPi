@@ -552,7 +552,7 @@ int PiloteOffsetAsserv(int x, int y, int teta) // marche pas
 Trame AnalyseTrame(Trame t)
 {
 	Trame retour;
-	int param1, param2, param3, param4;
+	unsigned int param1, param2, param3, param4;
 	
 	unsigned char i;
 	retour = t;
