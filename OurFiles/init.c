@@ -9,6 +9,11 @@ void InitClk(void)
 {	
 	PLLFBD = 38;				// Multiply by 40 for 160MHz VCO output (8MHz XT oscillator)
 	CLKDIV = 0x0000;			// FRC: divide by 2, PLLPOST: divide by 2, PLLPRE: divide by 2
+	
+	__builtin_write_OSCCONH(0x03);
+	__builtin_write_OSCCONL(OSCCON | 0x01);
+	while(OSCCONbits.COSC != 0b011);
+	while(OSCCONbits.LOCK != 1);
 }
 // Init Clock Par Mouly 
 //FCY = 40MHz 
