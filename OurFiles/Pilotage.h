@@ -54,6 +54,45 @@ Trame PiloteCapteurs(char cote);
 
 int Coupure(void);
 
+//FONCTION 2013
+
+#define ON  1
+#define OFF 0
+
+#define BRAS_DEPLOYE 155
+#define BRAS_RETRACTE 255
+
+#define DEBLOQUE_BAS 550
+#define DEBLOQUE_HAUT 250
+
+#define INIT_TURBINE 156
+
+#define CANON_ACTIVE 170
+#define CANON_DESACTIVE 156
+
+#define ASPIRATION_ACTIVE 312
+#define ASPIRATION_DESACTIVE 156
+
+#define ID_SERVO_ASPIRATEUR 16 //0
+#define ID_SERVO_DEBLOQUEUR 0  //16 ou 2
+#define ALL_SERVO 254
+
+#define SHUTTER_BLOQUE 0
+#define SHUTTER_PAS_BLOQUE 1
+#define SHUTTER LATAbits.LATA1
+
+#define SIGNALTMR3_RP LATCbits.LATC6
+#define SIGNALTMR5_RP LATCbits.LATC7
+
+void Aspire_Et_Decharger_Balle(void);
+void Ejecter_Balle(void);
+void Init_Turbine(void);
+
+//Initialisation timer 3,4 et 5
+void Init_Timer (void);
+
+//ASSERVISSEMENT
+
 int PiloteVitesse(int vitesse);
 
 int PiloteAcceleration(int acceleration);

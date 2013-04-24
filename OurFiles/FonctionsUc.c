@@ -69,7 +69,7 @@ void InitUART2(void)
 	U2STAbits.UTXBRK = 0;	//Bit11 Disabled
 	U2STAbits.UTXEN = 0;	//Bit10 TX pins controlled by periph
 	U2STAbits.UTXBF = 0;	//Bit9 *Read Only Bit*
-	U2STAbits.TRMT = 0;	//Bit8 *Read Only bit*
+	U2STAbits.TRMT = 0;		//Bit8 *Read Only bit*
 	U2STAbits.URXISEL = 0;	//Bits6,7 Int. on character recieved
 	U2STAbits.ADDEN = 0;	//Bit5 Address Detect Disabled
 	U2STAbits.RIDLE = 0;	//Bit4 *Read Only Bit*
@@ -131,3 +131,5 @@ void UART2PutChar( char ch )
     #endif
     while(U2STAbits.TRMT == 0);
 }
+
+

@@ -3,6 +3,7 @@
 #include "uart2.h"
 #include <uart2.h>
 #include <math.h>
+#include "CDS5516.h"
 
 // ATTENTION /!\ Ces fonctions ne doivent pas être bloquantes
 
@@ -33,6 +34,158 @@ extern double pos_teta;
 extern double erreur_allowed;
 
 unsigned char scan;
+
+//2013
+unsigned int Periode_TM3 = 156;	//Varibales TIMER
+unsigned int Periode_TM5 = 156;
+
+
+void delay(void) {
+    long i = 10; 
+    while(i--);
+}
+void delayms(void) 
+{
+	long i = 1600000; //400ms
+    while(i--);
+}
+void delays(void) 
+{
+	long i = 4000000; 
+    while(i--);
+}
+
+void Init_Turbine(void)
+{
+	Periode_TM5 = INIT_TURBINE;		//ASPIRATEUR
+	Periode_TM3 = INIT_TURBINE;		//CANON
+	delays();
+	delays();
+}
+
+///////////////PROG EXEMPLE////////////////////////////
+void Aspire_Et_Decharger_Balle(void)
+{
+	CDS5516Pos(19100,BRAS_DEPLOYE,ID_SERVO_ASPIRATEUR);
+	Periode_TM5 = ASPIRATION_ACTIVE;
+	delays();
+	delays();
+	CDS5516Pos(19100,BRAS_RETRACTE,ID_SERVO_ASPIRATEUR);
+	delays();
+	delays();
+	Periode_TM5 = ASPIRATION_DESACTIVE;
+}
+
+void Ejecter_Balle(void)
+{
+	Periode_TM5 = INIT_TURBINE;
+	Periode_TM3 = CANON_ACTIVE;
+	
+	SHUTTER = SHUTTER_PAS_BLOQUE;
+	CDS5516Pos(19100,DEBLOQUE_BAS,ID_SERVO_DEBLOQUEUR);
+	delayms();
+	SHUTTER = SHUTTER_BLOQUE;
+	CDS5516Pos(19100,DEBLOQUE_HAUT,ID_SERVO_DEBLOQUEUR);
+	delayms();		//330ms
+}
+///////////FIN PROG EXEMPLE/////////////////////////////
+
+//Initialisation TIMER 3,4 et 5 pour Turbine et Canon
+void Init_Timer (void)
+{
+	//--Timer4
+	T4CONbits.TON 	= 0;	//Stops the timer
+	T4CONbits.TSIDL = 0;
+	T4CONbits.TGATE = 0;
+	T4CONbits.TCS	= 0;
+	T4CONbits.TCKPS = 0b11; //Prescaler set to 1:1
+	
+	TMR4 = 0; 				//Clear timer register
+	PR4  = 3125; 			//Load the period value (2342 = 15ms)
+
+	IPC6bits.T4IP = 1; 		//Set Timer1 Interrupt Priority Level
+	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt Flag
+	IEC1bits.T4IE = 1; 		//Enable Timer1 interrupt
+	
+	T4CONbits.TON = 1;		//Starts the timer
+
+	//--Timer3
+	T3CONbits.TON 	= 0;	//Stops the timer
+	T3CONbits.TSIDL = 0;
+	T3CONbits.TGATE = 0;
+	T3CONbits.TCS	= 0;
+	T3CONbits.TCKPS = 0b11; //Prescaler set to 1:1
+	
+	TMR3 = 0; 				//Clear timer register
+	PR3  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
+
+	IPC2bits.T3IP = 2; 		//Set Timer3 Interrupt Priority Level
+	IFS0bits.T3IF = 0; 		//Clear Timer3 Interrupt Flag
+	IEC0bits.T3IE = 1; 		//Enable Timer3 interrupt
+
+	//--Timer5
+	T5CONbits.TON 	= 0;	//Stops the timer
+	T5CONbits.TSIDL = 0;
+	T5CONbits.TGATE = 0;
+	T5CONbits.TCS	= 0;
+	T5CONbits.TCKPS = 0b11; //Prescaler set to 1:1
+	
+	TMR5 = 0; 				//Clear timer register
+	PR5  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
+
+	IPC7bits.T5IP = 3; 		//Set Timer5 Interrupt Priority Level
+	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
+	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
+
+	SIGNALTMR3_RP = 0;
+	SIGNALTMR5_RP = 0;
+}
+void __attribute__((__interrupt__,__auto_psv__)) _T4Interrupt(void){
+   	
+	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt flag
+
+	SIGNALTMR3_RP = ~PORTCbits.RC6;
+	SIGNALTMR5_RP = ~PORTCbits.RC7;
+
+	TMR3 = 0; 				//Clear timer register
+	PR3  = Periode_TM3; 			//Load the period value 
+	T3CONbits.TON = 1;
+	
+	TMR5 = 0; 				//Clear timer register
+	PR5  = Periode_TM5; 			//Load the period value 
+	T5CONbits.TON = 1;
+}
+
+void __attribute__((__interrupt__,__auto_psv__)) _T3Interrupt(void){
+   	
+	T3CONbits.TON = 0;		//Stops the timer
+	IFS0bits.T3IF = 0; 		//Clear Timer1 Interrupt flag
+
+	SIGNALTMR3_RP = ~PORTCbits.RC6;
+
+}
+
+void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
+   	
+	T5CONbits.TON = 0;		//Stops the timer
+	IFS1bits.T5IF = 0; 		//Clear Timer1 Interrupt flag
+
+	SIGNALTMR5_RP = ~PORTCbits.RC7;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Fin 2013
 
 Trame PiloteGotoXY(int x,int y, unsigned char x_negatif, unsigned char y_negatif)
 {
@@ -326,8 +479,8 @@ int PiloteReculer(double distance)
 // direction : coté du pivot (Gauche ou Droite)
 int PilotePivoter(double angle, Cote direction)
 {
-	if(direction==Gauche)	Pivot( angle,0);
-	else					Pivot(-angle,0);
+	if(direction==Gauche)	Pivot( angle/100,0);
+	else					Pivot(-angle/100,0);
 	return 1;
 }
 
@@ -337,8 +490,8 @@ int PilotePivoter(double angle, Cote direction)
 // direction : coté du virage (Gauche ou Droite)
 int PiloteVirage(unsigned char reculer, unsigned char direction, double rayon, double angle)
 {
-	if(reculer) Virage(direction, rayon, angle, 0);
-	else	 	Virage(direction, rayon, -angle, 0);
+	if(reculer) Virage(direction, rayon, angle/100, 0);
+	else	 	Virage(direction, rayon, -angle/100, 0);
 
 	return 1;
 }

@@ -6,6 +6,7 @@
 double kp[N],ki[N],kd[N];
 int revolutions[N];
 unsigned char kd_cancel;
+unsigned int pid_count;
 double cons_pos[N]={0};
 long raw_position[N];
 long buff_position[N][256];
@@ -433,7 +434,7 @@ unsigned char Motors_Task(void)
 					{
 						motion[i] = 0;
 						speed[i]  = 0;
-						//retour = (0x20);
+						retour = (0x10);
 					}
 					break;
 
@@ -549,7 +550,19 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 		for(i=0;i<N;i++)
 		{
 			erreur[i] = targ_pos[i]* MM_INVSCALER - (double)raw_position[i];// ; // Calcul de l'erreur en pas codeur
-			cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
+			if((motion[0] == 0) && (motion[1] == 0))
+			{
+				if(pid_count < 1000)
+					pid_count++;
+			}
+			else
+			{
+				pid_count = 0;
+			}
+			
+			if(pid_count == 1000) 	cor[i] = erreur[i]*(kp[i]-5);
+			else					cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
+			
 			//if(kd_cancel < 200)	cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
 			//else				cor[i] = erreur[i]*4 ;//+ (erreur[i] - erreur_old[i]);
 			erreur_old[i] = erreur[i]; // Mise a jour necessaire pour le terme derive

@@ -165,10 +165,24 @@ int main(void)
 //		CDS5516Pos(19100,254,255);
 //	}
 
-	
+
+//	InitUART2();
+//	
+//	CDS5516Pos(19100,254,500);
+//	while(1);	
+//	
+//	
+//	
+//	Init_Timer();
+//	Init_Turbine(); //Initialisé après Init_Timer
+//		
 	while(1)
     {	
-
+//		Aspire_Et_Decharger_Balle();
+//		delays(); 
+//		delays();
+//		Ejecter_Balle();
+		
 		if(flag_envoi) 
 		{	
 			scan=0;

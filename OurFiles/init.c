@@ -65,7 +65,7 @@ void InitPorts()
 {
 	// Pinout date : 08_04_13
 	// Ports A
-	// 0 | I | RA0  : 
+	// 0 | I | RA0  : Coupure alim caméra
 	// 1 | O | RA1  : shutter tuyère
 	// 2 | I | RA2  : OSC
 	// 3 | O | RA3  : Coupure_Alim
@@ -83,13 +83,13 @@ void InitPorts()
 	// 2 | O | RP2  | RB2  : DIR_CDS
 	// 3 | I | RP3  | RB3  : codeur_Droit_A
 	// 4 | I | RP4  | RB4  : Interrupteur_Couleur
-	// 5 | I | RP5  | RB5  : PROG_PGD
-	// 6 | I | RP6  | RB6  : PROG_PGC
+	// 5 | I | RP5  | RB5  : PROG_PGD & Capteur présence balle
+	// 6 | I | RP6  | RB6  : PROG_PGC & Switchs assiette
 	// 7 | I | RP7  | RB7  : ETH_INT
 	// 8 | O | RP8  | RB8  : I2C_SCL
 	// 9 | X | RP9  | RB9  : I2C_SDA
-	// A | O | RP10 | RB10 : Servo_entrée_tuyère
-	// B | O | RP11 | RB11 : Servo_sortie_tuyère
+	// A | O | RP10 | RB10 : Pompe à vide
+	// B | O | RP11 | RB11 : Servo assiette
 	// C | O | RP12 | RB12 : Moteur_Gauche_DIR
 	// D | O | RP13 | RB13 : Moteur_Gauche_PWM
 	// E | O | RP14 | RB14 : Moteur_Droit_DIR
@@ -102,8 +102,8 @@ void InitPorts()
 	// 3 | O | RP19 | RC3  : Ethernet_SDO1
 	// 4 | O | RP20 | RC4  : Ethernet_SCK1
 	// 5 | I | RP21 | RC5  : Ethernet_SDI1
-	// 6 | O | RP22 | RC6  : Moteur_Turbine
-	// 7 | O | RP23 | RC7  : Moteur_Canon
+	// 6 | O | RP22 | RC6  : Moteur_Canon
+	// 7 | O | RP23 | RC7  : Moteur_Turbine
 	// 8 | I | RP24 | RC8  : CDS_RX
 	// 9 | O | RP25 | RC9  : CDS_TX
 
