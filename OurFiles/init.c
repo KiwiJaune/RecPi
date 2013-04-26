@@ -113,7 +113,7 @@ void InitPorts()
 	//          FEDCBA9876543210
 	TRISB 	= 0b0000001011111011;
 	//          FEDCBA9876543210
-	TRISC 	= 0b1111110100100111;
+	TRISC 	= 0b1111111000100111; //Modif de C9 et C8 : Valeur par default C9 = 0;C8 = 1
 	//          FEDCBA9876543210
 	
 	AD1PCFGL=0xFFFF;	//Tous les ports Analogiques configurés en numérique
@@ -130,10 +130,15 @@ void InitPorts()
 	RPOR9bits.RP19R = 0b00111;   // SDO1 <==> RP19 RC3  //23/01/2013
 	
 	//Configuration des ports pour la liaison UART2 des CDS
-	RPINR19bits.U2RXR	= 24;	// Rx	<==> RP24-RC8
-	TRISCbits.TRISC9 	= 0;
-	RPOR12bits.RP25R	= 0b00101;	// Tx	<==> RP25-RC9
-	
+//	RPINR19bits.U2RXR	= 24;	// Rx	<==> RP24-RC8
+//	TRISCbits.TRISC9 	= 1;
+//	RPOR12bits.RP25R	= 0b00101;	// Tx	<==> RP25-RC9
+//	
+	RPOR12bits.RP25R = 0b00011;     //TX RP24
+    RPINR18 = 0b11000;              //RX RP25
+    TRISCbits.TRISC8 = 0;
+    TRISCbits.TRISC9 = 1;
+    
 	LATAbits.LATA3 = 0; 	// Alimentation OFF
 	
 	//Initialisation du sens de communication pour les AX12

@@ -6,6 +6,7 @@
 #include "OurFiles/asser.h"
 #include "OurFiles/init.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <uart.h>
 #include <math.h>
 #include "OurFiles/Pilotage.h"
@@ -41,7 +42,7 @@ APP_CONFIG AppConfig;
 // Use UART2 instead of UART1 for stdout (printf functions).  Explorer 16 
 // serial port hardware is on PIC UART2 module.
 //#if defined(EXPLORER_16)//TODO
-	int __C30_UART = 2;
+// int __C30_UART = 2;
 //#endif
 
 // Private helper functions.
@@ -115,15 +116,11 @@ int main(void)
 	envoiCalage.nbChar = 2;
 
 	Trame trame;	
-	
-	//Init_Clk();
+
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
-		//Configuration des ports pour la liaison UART2 des CDS
-	RPINR19bits.U2RXR	= 24;	// Rx	<==> RP24-RC8
-	TRISCbits.TRISC9 	= 0;
-	RPOR12bits.RP25R	= 0b00101;	// Tx	<==> RP25-RC9
-	
+    Init_Timer();	
+    
 	InitQEI(); 		// Initialisation des entrées en quadrature
 	InitPWM();		// Configuration du module PWM 
 	InitT2();		// Configuration du timer 2	
@@ -156,18 +153,11 @@ int main(void)
 
 	hold_blocage=0;
 	
-//	pwm(GAUCHE,-1000);
-//	pwm(DROITE,1000);
+	pwm(GAUCHE,-1000);
+	pwm(DROITE,1000);
 // Initialisation de la liaison série 2 (UART2)
-//	InitUART2();
-//	while(1);
-//	{
-//		CDS5516Pos(19100,254,255);
-//	}
+	InitUART2();
 
-
-//	InitUART2();
-//	
 //	CDS5516Pos(19100,254,500);
 //	while(1);	
 //	
@@ -177,129 +167,129 @@ int main(void)
 //	Init_Turbine(); //Initialisé après Init_Timer
 //		
 	while(1)
-    {	
-//		Aspire_Et_Decharger_Balle();
-//		delays(); 
-//		delays();
-//		Ejecter_Balle();
+  {	
+		Aspire_Et_Decharger_Balle();
+		delays(); 
+		delays();
+		Ejecter_Balle();
 		
-		if(flag_envoi) 
-		{	
-			scan=0;
-			EnvoiUserUdp(envoiFin);
-			flag_envoi = 0;
-		}
-		if(flag_distance) 
-		{
-			/*distanceRestante = (int)Stop(2);	// Abrupt
-			messdistance[2] = distanceRestante >> 8;
-			messdistance[3] = distanceRestante & 0xFF;
-			EnvoiUserUdp(envoiDistance);*/
-			flag_distance = 0;
-		}
-		if(flag_blocage)
-		{
-			EnvoiUserUdp(envoiBlocage);
-			flag_blocage = 0;
-		}
-		if(flag_calage)
-		{
-			EnvoiUserUdp(envoiCalage);
-			flag_calage = 0;
-		}
-		
-		//	motor_flag=Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
-		/*
-		if(courrier)
-		{
-			switch(motor_flag)
-			{
-				case 0x00:		break;
-				case 0x01:
-				case 0x02:
-				case 0x03:
-				case 0x04:
-				case 0x05:	messEtape[0] = 1;
-							messEtape[1] = 0x21;
-							messEtape[2] = motor_flag;
-							flagEtape.message = messEtape;
-							flagEtape.nbChar = 3;
-							//EnvoiUserUdp(flagEtape);			//A remettre pour etape
-							break;
-						
-		
-				case 0x10:	EnvoiUserUdp(envoiFin);
-							break;
-				case 0x20:	//if(hold_blocage==0)                // A remettre pour blocage 
-							//EnvoiUserUdp(envoiBlocage);
-							//hold_blocage=1;
-							break;
-				case 0xFF:	//EnvoiUserUdp(envoiBlocage); // A coder...
-							datalogger_blocker=1;
-							Stop(ABRUPT);
-							for(dataplayer_counter=0;dataplayer_counter<500;dataplayer_counter++)
-							{
-								if(datalogger_counter>0)	datalogger_counter--;
-								else						datalogger_counter=499;
-								manual_pid(datalogger_ga[datalogger_counter],datalogger_dr[datalogger_counter]);
-								Tempo1mS(1);
-							}
-							datalogger_blocker=0;
-							break;
-				default:
-							break;
-			}
-			if(motor_flag != 0x20) hold_blocage=0;
-			courrier=0;
-		}
-		*/
-		
-
-/*		for(i=0;i<N;i++) // Constat, au bout de quelques run demo=4, il y a un depassement systématique de l'erreur ; peut être que c'était a cause de abs() au lieu de fabs()
-		{
-			if((fabs(cons_pos[0]-real_pos[0]) > 10) || (fabs(cons_pos[1]-real_pos[1]) > 10))
-			{
-				// Seuil de detection blocage
-				distanceRestante = fabs(((targ_pos[0]-real_pos[0])+targ_pos[1]-real_pos[1])/2);
-
-				while(1)
-				{
-					pwm(GAUCHE,-500);
-					pwm(DROITE,500);
-				}
-			}
-		}
-
-		*/
-    	
-		StackTask();
-		trame = ReceptionUserUdp();
-		if(trame.nbChar != 0)
-		{
-			trame = AnalyseTrame(trame);
-			EnvoiUserUdp(trame);
-		}
-        StackApplications();
-
-		if(dwLastIP != AppConfig.MyIPAddr.Val)
-		{
-			dwLastIP = AppConfig.MyIPAddr.Val;
-			
-			#if defined(STACK_USE_UART)
-				putrsUART((ROM char*)"\r\nNew IP Address: ");
-			#endif
-
-			DisplayIPValue(AppConfig.MyIPAddr);
-
-			#if defined(STACK_USE_UART)
-				putrsUART((ROM char*)"\r\n");
-			#endif
-
-
-			#if defined(STACK_USE_ANNOUNCE)
-				AnnounceIP();
-			#endif
-		}
+//		if(flag_envoi) 
+//		{	
+//			scan=0;
+//			EnvoiUserUdp(envoiFin);
+//			flag_envoi = 0;
+//		}
+//		if(flag_distance) 
+//		{
+//			/*distanceRestante = (int)Stop(2);	// Abrupt
+//			messdistance[2] = distanceRestante >> 8;
+//			messdistance[3] = distanceRestante & 0xFF;
+//			EnvoiUserUdp(envoiDistance);*/
+//			flag_distance = 0;
+//		}
+//		if(flag_blocage)
+//		{
+//			EnvoiUserUdp(envoiBlocage);
+//			flag_blocage = 0;
+//		}
+//		if(flag_calage)
+//		{
+//			EnvoiUserUdp(envoiCalage);
+//			flag_calage = 0;
+//		}
+//		
+//		//	motor_flag=Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
+//		/*
+//		if(courrier)
+//		{
+//			switch(motor_flag)
+//			{
+//				case 0x00:		break;
+//				case 0x01:
+//				case 0x02:
+//				case 0x03:
+//				case 0x04:
+//				case 0x05:	messEtape[0] = 1;
+//							messEtape[1] = 0x21;
+//							messEtape[2] = motor_flag;
+//							flagEtape.message = messEtape;
+//							flagEtape.nbChar = 3;
+//							//EnvoiUserUdp(flagEtape);			//A remettre pour etape
+//							break;
+//						
+//		
+//				case 0x10:	EnvoiUserUdp(envoiFin);
+//							break;
+//				case 0x20:	//if(hold_blocage==0)                // A remettre pour blocage 
+//							//EnvoiUserUdp(envoiBlocage);
+//							//hold_blocage=1;
+//							break;
+//				case 0xFF:	//EnvoiUserUdp(envoiBlocage); // A coder...
+//							datalogger_blocker=1;
+//							Stop(ABRUPT);
+//							for(dataplayer_counter=0;dataplayer_counter<500;dataplayer_counter++)
+//							{
+//								if(datalogger_counter>0)	datalogger_counter--;
+//								else						datalogger_counter=499;
+//								manual_pid(datalogger_ga[datalogger_counter],datalogger_dr[datalogger_counter]);
+//								Tempo1mS(1);
+//							}
+//							datalogger_blocker=0;
+//							break;
+//				default:
+//							break;
+//			}
+//			if(motor_flag != 0x20) hold_blocage=0;
+//			courrier=0;
+//		}
+//		*/
+//		
+//
+///*		for(i=0;i<N;i++) // Constat, au bout de quelques run demo=4, il y a un depassement systématique de l'erreur ; peut être que c'était a cause de abs() au lieu de fabs()
+//		{
+//			if((fabs(cons_pos[0]-real_pos[0]) > 10) || (fabs(cons_pos[1]-real_pos[1]) > 10))
+//			{
+//				// Seuil de detection blocage
+//				distanceRestante = fabs(((targ_pos[0]-real_pos[0])+targ_pos[1]-real_pos[1])/2);
+//
+//				while(1)
+//				{
+//					pwm(GAUCHE,-500);
+//					pwm(DROITE,500);
+//				}
+//			}
+//		}
+//
+//		*/
+//    	
+//		StackTask();
+//		trame = ReceptionUserUdp();
+//		if(trame.nbChar != 0)
+//		{
+//			trame = AnalyseTrame(trame);
+//			EnvoiUserUdp(trame);
+//		}
+//        StackApplications();
+//
+//		if(dwLastIP != AppConfig.MyIPAddr.Val)
+//		{
+//			dwLastIP = AppConfig.MyIPAddr.Val;
+//			
+//			#if defined(STACK_USE_UART)
+//				putrsUART((ROM char*)"\r\nNew IP Address: ");
+//			#endif
+//
+//			DisplayIPValue(AppConfig.MyIPAddr);
+//
+//			#if defined(STACK_USE_UART)
+//				putrsUART((ROM char*)"\r\n");
+//			#endif
+//
+//
+//			#if defined(STACK_USE_ANNOUNCE)
+//				AnnounceIP();
+//			#endif
+//		}
 	}
 }
 
@@ -517,4 +507,3 @@ void __attribute__ ((interrupt, no_auto_psv)) _T2Interrupt(void)
 	PID_ressource_used = TMR2;
 	IFS0bits.T2IF = 0;
 }
-
