@@ -30,6 +30,7 @@ extern double position_lock;
 extern double pos_x;
 extern double pos_y;
 extern double pos_teta;
+extern double offset_teta;
 
 extern double erreur_allowed;
 
@@ -250,8 +251,8 @@ Trame PilotePositionXYT()
 	tableau[3] = (int)pos_x&0x00FF;
 	tableau[4] = (int)pos_y>>8;
 	tableau[5] = (int)pos_y&0x00FF;
-	tableau[6] = (int)(pos_teta*360/(2*PI))>>8;
-	tableau[7] = (int)(pos_teta*360/(2*PI))&0x00FF;
+	tableau[6] = (unsigned int)(pos_teta*36000/(2*PI)+18000)>>8;
+	tableau[7] = (unsigned int)(pos_teta*36000/(2*PI)+18000)&0x00FF;
 	
 	trame.message = tableau;
 	
@@ -566,7 +567,7 @@ int PiloteOffsetAsserv(int x, int y, int teta) // marche pas
 {
 	pos_x = -y;
 	pos_y = -x;
-	pos_teta = 0;
+	offset_teta = (teta/180*PI) / 100.0 - pos_teta;
 }
 
 // Analyse la trame recue et renvoie vers la bonne fonction de pilotage

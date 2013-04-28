@@ -19,7 +19,7 @@ double feedforward=0;//825;
 unsigned int position_buffer[6];
 double bridage=0,xydistance,xyangle;
 unsigned char xymotion=0;
-double pos_x,pos_y,pos_teta;
+double pos_x,pos_y,pos_teta, offset_teta = 0;
 double ratio;
 unsigned char moteur1, moteur2,motiontype=0; // motiontype : 0: Avance 1: Pivot 2: Virage 3: Calage
 unsigned char cpt_calage[N];
@@ -320,7 +320,7 @@ unsigned char Motors_Task(void)
 
 	lcurvi   = (real_pos[1] + real_pos[0])/2;
 	vitesse  = lcurvi - lcurvi_old;
-	pos_teta = (real_pos[1] - real_pos[0]) / (VOIE);
+	pos_teta = (real_pos[1] - real_pos[0]) / (VOIE) + offset_teta;
 	while(pos_teta >  PI) pos_teta -= 2*PI;
 	while(pos_teta < -PI) pos_teta += 2*PI;
 	delta_x  = -vitesse * sinf(pos_teta);
