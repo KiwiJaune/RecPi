@@ -79,8 +79,6 @@ int main(void)
 	unsigned char demo=0,flagerror=0;
 	unsigned char hold_blocage;
 
-	unsigned int ji = 0;
-
 	double test;
 	double vide[2];
 	Trame flagEtape;
@@ -155,7 +153,7 @@ int main(void)
 	
 	//INTERRUPT PRIORITY
 	IPC4bits.SI2C1IP = 7;
-	IPC1bits.T2IP = 4;
+//	IPC1bits.T2IP = 4;
 	IPC14bits.QEI1IP = 5;
 	IPC18bits.QEI2IP = 5;								
 
@@ -166,8 +164,8 @@ int main(void)
 // Initialisation de la liaison série 2 (UART2)
 	InitUART2();
 	Init_Turbine(); //Initialisé après Init_Timer
-	Canon_Vitesse(188);
-	Aspirateur_Vitesse(312);
+//	Canon_Vitesse(188);
+//	Aspirateur_Vitesse(312);
 
 	while(1)
   {	

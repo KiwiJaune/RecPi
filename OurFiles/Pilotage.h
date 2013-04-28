@@ -69,7 +69,7 @@ int Coupure(void);
 
 #define INIT_TURBINE 156
 
-#define CANON_ACTIVE 170
+#define CANON_ACTIVE 172
 #define CANON_DESACTIVE 156
 
 #define ASPIRATION_ACTIVE 312

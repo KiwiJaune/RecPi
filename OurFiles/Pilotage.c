@@ -79,16 +79,19 @@ void Aspire_Et_Decharger_Balle(void)
 
 void Ejecter_Balle(void)
 {
+	
+	unsigned int index = 0;
 	Init_Turbine();
 
 	Periode_TM3 = CANON_ACTIVE;
-	
-	SHUTTER = SHUTTER_PAS_BLOQUE;
-	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
-	delayms();
-	SHUTTER = SHUTTER_BLOQUE;
-	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_HAUT);
-	delayms();		//330ms
+	for(index = 0;index<10;index++){
+		SHUTTER = SHUTTER_PAS_BLOQUE;
+		CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
+		delayms();
+		SHUTTER = SHUTTER_BLOQUE;
+		CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_HAUT);
+		delays();		//330ms
+	}
 }
 ///////////FIN PROG EXEMPLE/////////////////////////////
 
@@ -129,7 +132,7 @@ void Init_Timer (void)
 	TMR4 = 0; 				//Clear timer register
 	PR4  = 3125; 			//Load the period value (2342 = 15ms)
 
-	IPC6bits.T4IP = 1; 		//Set Timer1 Interrupt Priority Level
+	IPC6bits.T4IP = 7; 		//Set Timer1 Interrupt Priority Level
 	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt Flag
 	IEC1bits.T4IE = 1; 		//Enable Timer1 interrupt
 	
@@ -145,7 +148,7 @@ void Init_Timer (void)
 	TMR3 = 0; 				//Clear timer register
 	PR3  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
 
-	IPC2bits.T3IP = 2; 		//Set Timer3 Interrupt Priority Level
+	IPC2bits.T3IP = 5; 		//Set Timer3 Interrupt Priority Level
 	IFS0bits.T3IF = 0; 		//Clear Timer3 Interrupt Flag
 	IEC0bits.T3IE = 1; 		//Enable Timer3 interrupt
 
@@ -159,7 +162,7 @@ void Init_Timer (void)
 	TMR5 = 0; 				//Clear timer register
 	PR5  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
 
-	IPC7bits.T5IP = 3; 		//Set Timer5 Interrupt Priority Level
+	IPC7bits.T5IP = 6; 		//Set Timer5 Interrupt Priority Level
 	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
 	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
 

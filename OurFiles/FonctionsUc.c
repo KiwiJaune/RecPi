@@ -114,13 +114,13 @@ void InitUART2() {
 	U1STAbits.URXISEL = 0b00;	// interrupt flag bit is set when RXBUF is filled whith 1 character
 	U1STAbits.ADDEN = 0;		// address detect mode is disabled
 
-    IPC3bits.U1TXIP = 3;         // set UART Tx interrupt priority
+    IPC3bits.U1TXIP = 2;         // set UART Tx interrupt priority
 	IFS0bits.U1TXIF = 0;         // clear UART Tx interrupt flag
 	IEC0bits.U1TXIE = 0;         // enable UART Tx interrupt
 
 	IFS0bits.U1RXIF = 0;		 // clear interrupt flag of rx
 	IEC0bits.U1RXIE = 0;		 // enable rx recieved data
-    IPC2bits.U1RXIP = 3;
+    IPC2bits.U1RXIP = 2;
    
     RPOR12bits.RP25R = 0b00011;     //TX RP24
     RPINR18 = 0b11000;              //RX RP25

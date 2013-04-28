@@ -145,12 +145,30 @@ void InitPorts()
 	LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
 }
 
+//void InitT2(void)
+//{
+//	T2CONbits.TCKPS = 1;	// 1:8 Prescaler
+//	PR2 = 5000;				// Time to autoreload (1 ms @40 MIPS)
+//	IFS0bits.T2IF = 0;		// Interrupt flag cleared
+//	IEC0bits.T2IE = 1;		// Interrupt enabled
+//	T2CONbits.TON = 1;		// Timer enabled
+//}
+
 void InitT2(void)
 {
-	T2CONbits.TCKPS = 1;	// 1:8 Prescaler
-	PR2 = 5000;				// Time to autoreload (1 ms @40 MIPS)
-	IFS0bits.T2IF = 0;		// Interrupt flag cleared
-	IEC0bits.T2IE = 1;		// Interrupt enabled
+	T2CONbits.TON 	= 0;	//Stops the timer
+	T2CONbits.TSIDL = 0;
+	T2CONbits.TGATE = 0;
+	T2CONbits.TCS	= 0;
+	T2CONbits.T32	= 0;
+	T2CONbits.TCKPS = 0b01; //Prescaler set to 1:1
+	
+	TMR2 = 0; 				//Clear timer register
+	PR2  = 5000;			//Load the period value (5000 = 0.5ms)
+
+	IPC1bits.T2IP = 4; 		//Set Timer2 Interrupt Priority Level
+	IFS0bits.T2IF = 0; 		//Clear Timer2 Interrupt Flag
+	IEC0bits.T2IE = 1; 		//Enable Timer2 interrupt
 	T2CONbits.TON = 1;		// Timer enabled
 }
 
