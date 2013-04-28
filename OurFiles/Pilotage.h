@@ -23,6 +23,8 @@ void PiloteResetAx();
 Trame PilotePositionXYT(void);
 Trame PiloteDemandeCapteurs(char numCapteur);
 
+void PiloteAlimentationCamera(char onOff);
+
 void PilotePositionAx(char numAx, int position);
 
 void PiloteLedAx(char numAx, char allume);
@@ -87,6 +89,8 @@ int Coupure(void);
 void Aspire_Et_Decharger_Balle(void);
 void Ejecter_Balle(void);
 void Init_Turbine(void);
+void Canon_Vitesse(unsigned int vitesse);
+void Aspirateur_Vitesse(unsigned int vitesse);
 
 //Initialisation timer 3,4 et 5
 void Init_Timer (void);
@@ -135,4 +139,12 @@ Trame AnalyseTrame(Trame t);
 #define	CMD_ALIMENTATION			0xF3
 #define CMD_OFFSETASSERV			0x46
 
+#define CMD_VITESSE_ASPIRATEUR      0x53
+#define CMD_VITESSE_CANON           0x54
+#define CMD_SHUTTER                 0x55
 
+#define CMD_SERVO_POSITION          0x60
+#define CMD_SERVO_VITESSE           0x61
+
+#define CMD_ASPIRER_BALLE			0x80
+#define CMD_EJECTER_BALLE			0x81

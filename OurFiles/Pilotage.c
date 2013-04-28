@@ -66,6 +66,7 @@ void Init_Turbine(void)
 ///////////////PROG EXEMPLE////////////////////////////
 void Aspire_Et_Decharger_Balle(void)
 {
+//	Init_Turbine();
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_DEPLOYE);
 	Periode_TM5 = ASPIRATION_ACTIVE;
 	delays();
@@ -78,7 +79,8 @@ void Aspire_Et_Decharger_Balle(void)
 
 void Ejecter_Balle(void)
 {
-	Periode_TM5 = INIT_TURBINE;
+	Init_Turbine();
+
 	Periode_TM3 = CANON_ACTIVE;
 	
 	SHUTTER = SHUTTER_PAS_BLOQUE;
@@ -89,6 +91,30 @@ void Ejecter_Balle(void)
 	delayms();		//330ms
 }
 ///////////FIN PROG EXEMPLE/////////////////////////////
+
+
+//Fonction Control Shutter 
+//Arguments : 
+//0 Shutter ne bloque pas
+//1 Shutter bloque
+void Shutter_Pos(unsigned char Pos)
+{
+	if(Pos)
+		SHUTTER = SHUTTER_BLOQUE;
+	else
+		SHUTTER = SHUTTER_PAS_BLOQUE;
+}
+
+
+void Aspirateur_Vitesse(unsigned int vitesse)
+{
+	Periode_TM5 = vitesse;
+}
+
+void Canon_Vitesse(unsigned int vitesse)
+{
+	Periode_TM3 = vitesse;
+}
 
 //Initialisation TIMER 3,4 et 5 pour Turbine et Canon
 void Init_Timer (void)
@@ -175,17 +201,8 @@ void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
 
 
 
-
-
-
-
-
-
-
-
-
-
 //Fin 2013
+
 
 Trame PiloteGotoXY(int x,int y, unsigned char x_negatif, unsigned char y_negatif)
 {
@@ -442,10 +459,15 @@ Trame PiloteGetBuffPosition()
 
 void PiloteAlimentation(char onOff)
 {
-	TRISBbits.TRISB0 = 0;
-	LATBbits.LATB0 = onOff;
+	TRISAbits.TRISA3 = 0;
+	LATAbits.LATA3 = onOff; 
 }
 
+void PiloteAlimentationCamera(char onOff)
+{
+	TRISAbits.TRISA0 = 0;
+	LATAbits.LATA0 = onOff; 
+}
 int PiloteVitesse(int vitesse)
 {
 	Motors_SetSpeed(vitesse,MOTEUR_GAUCHE);
@@ -552,6 +574,7 @@ int PiloteOffsetAsserv(int x, int y, int teta) // marche pas
 Trame AnalyseTrame(Trame t)
 {
 	Trame retour;
+	Trame debug;
 	unsigned int param1, param2, param3, param4;
 	
 	unsigned char i;
@@ -641,7 +664,6 @@ Trame AnalyseTrame(Trame t)
 
 		// Commandes spéciales Pwet Debug
 
-
 		case CMD_OFFSETASSERV:
 
 			param1 = t.message[2]*256+t.message[3];			// X
@@ -702,11 +724,41 @@ Trame AnalyseTrame(Trame t)
 		case 0x90: //CMD_COUPURE:
 			Coupure();
 		break;
+		case CMD_ASPIRER_BALLE: 
+			Aspire_Et_Decharger_Balle();
+		break;
+		case CMD_EJECTER_BALLE: 
+			Ejecter_Balle();
+		break;
+		case CMD_VITESSE_ASPIRATEUR:
+			Aspirateur_Vitesse(t.message[2]*256+t.message[3]);
+		break;
+		case CMD_VITESSE_CANON:
+			Canon_Vitesse(t.message[2]*256+t.message[3]);
+		break;
+		case CMD_SHUTTER: 
+			if(t.message[2])
+				Shutter_Pos(SHUTTER_BLOQUE);
+			else 
+				Shutter_Pos(SHUTTER_PAS_BLOQUE);
+		break;	
+		case CMD_SERVO_POSITION:
+			// Bouge servomoteur
+			param1 = t.message[2];						// Id servo
+			param2 = t.message[3] * 256 + t.message[4];	// Position
+			param3 = 19100;
+			CDS5516Pos(param3,param1,param2);
+		break;	
+		case CMD_SERVO_VITESSE:
+			// Bouge servomoteur
+			param1 = t.message[2];						// Id servo
+			param2 = t.message[3] * 256 + t.message[4];	// Position
+			param3 = 19100;
+			CDS5516Vit(param3, param1,param2);
+		break;
 		case 0xF2:
 			Reset();
 			break;
-
-
 	}
 	return retour;
 }

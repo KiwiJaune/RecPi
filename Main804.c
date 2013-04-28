@@ -79,6 +79,8 @@ int main(void)
 	unsigned char demo=0,flagerror=0;
 	unsigned char hold_blocage;
 
+	unsigned int ji = 0;
+
 	double test;
 	double vide[2];
 	Trame flagEtape;
@@ -115,6 +117,14 @@ int main(void)
 	envoiCalage.message = messcalage;
 	envoiCalage.nbChar = 2;
 
+
+	Trame envoiDebugAsser;
+	static BYTE Debug_Asser[4];
+//	Debug_Asser[0] = erreur[0];
+//	Debug_Asser[1] = erreur[1];
+//	Debug_Asser[2] = cor[0];
+//	Debug_Asser[3] = cor[1];
+	envoiDebugAsser.message = Debug_Asser;
 	Trame trame;	
 
 	InitClk(); 		// Initialisation de l'horloge
@@ -132,7 +142,7 @@ int main(void)
 	// required by the UART configuration routines
     TickInit();
 	#if defined(STACK_USE_MPFS) || defined(STACK_USE_MPFS2)
-	MPFSInit();
+		MPFSInit();
 	#endif
 	
 	// Initialize Stack and application related NV variables into AppConfig.
@@ -145,7 +155,7 @@ int main(void)
 	
 	//INTERRUPT PRIORITY
 	IPC4bits.SI2C1IP = 7;
-	IPC1bits.T2IP = 1; // 4
+	IPC1bits.T2IP = 4;
 	IPC14bits.QEI1IP = 5;
 	IPC18bits.QEI2IP = 5;								
 
@@ -153,51 +163,47 @@ int main(void)
 
 	hold_blocage=0;
 	
-	pwm(GAUCHE,-1000);
-	pwm(DROITE,1000);
 // Initialisation de la liaison série 2 (UART2)
 	InitUART2();
+	Init_Turbine(); //Initialisé après Init_Timer
+	Canon_Vitesse(188);
+	Aspirateur_Vitesse(312);
 
-//	CDS5516Pos(19100,254,500);
-//	while(1);	
-//	
-//	
-//	
-//	Init_Timer();
-//	Init_Turbine(); //Initialisé après Init_Timer
-//		
 	while(1)
   {	
-		Aspire_Et_Decharger_Balle();
-		delays(); 
-		delays();
-		Ejecter_Balle();
+
+//		Aspire_Et_Decharger_Balle();
+//		delays(); 
+//		delays();
+//		Ejecter_Balle();
+//		delays(); 
+//		delays();
+
+		if(flag_envoi) 
+		{	
+			scan=0;
+			EnvoiUserUdp(envoiFin);
+			flag_envoi = 0;
+		}
+		if(flag_distance) 
+		{
+			/*distanceRestante = (int)Stop(2);	// Abrupt
+			messdistance[2] = distanceRestante >> 8;
+			messdistance[3] = distanceRestante & 0xFF;
+			EnvoiUserUdp(envoiDistance);*/
+			flag_distance = 0;
+		}
+		if(flag_blocage)
+		{
+			EnvoiUserUdp(envoiBlocage);
+			flag_blocage = 0;
+		}
+		if(flag_calage)
+		{
+			EnvoiUserUdp(envoiCalage);
+			flag_calage = 0;
+		}
 		
-//		if(flag_envoi) 
-//		{	
-//			scan=0;
-//			EnvoiUserUdp(envoiFin);
-//			flag_envoi = 0;
-//		}
-//		if(flag_distance) 
-//		{
-//			/*distanceRestante = (int)Stop(2);	// Abrupt
-//			messdistance[2] = distanceRestante >> 8;
-//			messdistance[3] = distanceRestante & 0xFF;
-//			EnvoiUserUdp(envoiDistance);*/
-//			flag_distance = 0;
-//		}
-//		if(flag_blocage)
-//		{
-//			EnvoiUserUdp(envoiBlocage);
-//			flag_blocage = 0;
-//		}
-//		if(flag_calage)
-//		{
-//			EnvoiUserUdp(envoiCalage);
-//			flag_calage = 0;
-//		}
-//		
 //		//	motor_flag=Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
 //		/*
 //		if(courrier)
@@ -262,34 +268,34 @@ int main(void)
 //
 //		*/
 //    	
-//		StackTask();
-//		trame = ReceptionUserUdp();
-//		if(trame.nbChar != 0)
-//		{
-//			trame = AnalyseTrame(trame);
-//			EnvoiUserUdp(trame);
-//		}
-//        StackApplications();
-//
-//		if(dwLastIP != AppConfig.MyIPAddr.Val)
-//		{
-//			dwLastIP = AppConfig.MyIPAddr.Val;
-//			
-//			#if defined(STACK_USE_UART)
-//				putrsUART((ROM char*)"\r\nNew IP Address: ");
-//			#endif
-//
-//			DisplayIPValue(AppConfig.MyIPAddr);
-//
-//			#if defined(STACK_USE_UART)
-//				putrsUART((ROM char*)"\r\n");
-//			#endif
-//
-//
-//			#if defined(STACK_USE_ANNOUNCE)
-//				AnnounceIP();
-//			#endif
-//		}
+		StackTask();
+		trame = ReceptionUserUdp();
+		if(trame.nbChar != 0)
+		{
+			trame = AnalyseTrame(trame);
+			EnvoiUserUdp(trame);
+		}
+        StackApplications();
+
+		if(dwLastIP != AppConfig.MyIPAddr.Val)
+		{
+			dwLastIP = AppConfig.MyIPAddr.Val;
+			
+			#if defined(STACK_USE_UART)
+				putrsUART((ROM char*)"\r\nNew IP Address: ");
+			#endif
+
+			DisplayIPValue(AppConfig.MyIPAddr);
+
+			#if defined(STACK_USE_UART)
+				putrsUART((ROM char*)"\r\n");
+			#endif
+
+
+			#if defined(STACK_USE_ANNOUNCE)
+				AnnounceIP();
+			#endif
+		}
 	}
 }
 

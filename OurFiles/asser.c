@@ -24,7 +24,6 @@ double ratio;
 unsigned char moteur1, moteur2,motiontype=0; // motiontype : 0: Avance 1: Pivot 2: Virage 3: Calage
 unsigned char cpt_calage[N];
 
-
 double etape_pos[5];
 unsigned char nbr_etapes,num_etape;
 
