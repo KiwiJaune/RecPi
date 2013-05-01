@@ -167,7 +167,7 @@ int main(void)
 	
 	while(1)
   {	
-//		Aspire_Et_Decharger_Balle();
+//    	Aspire_Et_Decharger_Balle();
 //		delays(); 
 //		Ejecter_Balle();
 //		delays(); 

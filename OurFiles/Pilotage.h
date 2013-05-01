@@ -66,15 +66,15 @@ int Coupure(void);
 #define DEBLOQUE_BAS 550
 #define DEBLOQUE_HAUT 250
 
-#define INIT_TURBINE 5000
+#define INIT_TURBINE 312 //Previous Value 5000
 #define INIT_CANON 5000
 
-#define CANON_ACTIVE 5750
+#define CANON_ACTIVE 5500
 #define CANON_DESACTIVE 5000
 #define CANON_ACTIVE_MAX 10000
 
-#define ASPIRATION_ACTIVE 11000
-#define ASPIRATION_DESACTIVE 5000
+#define ASPIRATION_ACTIVE 625
+#define ASPIRATION_DESACTIVE 312
 
 #define ID_SERVO_ASPIRATEUR 16 //0
 #define ID_SERVO_DEBLOQUEUR 0  //16 ou 2
@@ -84,8 +84,8 @@ int Coupure(void);
 #define SHUTTER_PAS_BLOQUE 1
 #define SHUTTER LATAbits.LATA1
 
-#define SIGNALTMR3_RP LATCbits.LATC6
-#define SIGNALTMR5_RP LATCbits.LATC7
+#define SIGNAL_TURBINE LATCbits.LATC7
+#define SIGNAL_CANON LATCbits.LATC6
 
 //Fonction de test des actionneurs
 void Aspire_Et_Decharger_Balle(void);
