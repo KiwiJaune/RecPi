@@ -523,8 +523,8 @@ int PiloteReculer(double distance)
 // direction : coté du pivot (Gauche ou Droite)
 int PilotePivoter(double angle, Cote direction)
 {
-	if(direction==Gauche)	Pivot( angle/100,0);
-	else					Pivot(-angle/100,0);
+	if(direction==Gauche)	Pivot( angle/100.0,0);
+	else					Pivot(-angle/100.0,0);
 	return 1;
 }
 
