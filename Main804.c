@@ -115,7 +115,6 @@ int main(void)
 	envoiCalage.message = messcalage;
 	envoiCalage.nbChar = 2;
 
-
 	Trame envoiDebugAsser;
 	static BYTE Debug_Asser[4];
 //	Debug_Asser[0] = erreur[0];
@@ -156,7 +155,7 @@ int main(void)
 //	IPC1bits.T2IP = 4;
 	IPC14bits.QEI1IP = 5;
 	IPC18bits.QEI2IP = 5;								
-
+	
 	demo=4;
 
 	hold_blocage=0;
@@ -164,15 +163,12 @@ int main(void)
 // Initialisation de la liaison série 2 (UART2)
 	InitUART2();
 	Init_Turbine(); //Initialisé après Init_Timer
-//	Canon_Vitesse(188);
-//	Aspirateur_Vitesse(312);
-
+	Init_Servos();
+	
 	while(1)
   {	
-
 //		Aspire_Et_Decharger_Balle();
 //		delays(); 
-//		delays();
 //		Ejecter_Balle();
 //		delays(); 
 //		delays();

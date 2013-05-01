@@ -34,6 +34,7 @@ void Init_Clk(void)
     while(OSCCONbits.LOCK != 1);			// Wait for Pll to Lock 
     
 }
+
 void InitPWM(void)
 {
 	P1TCONbits.PTEN = 1; 		// PWM Time base is On
