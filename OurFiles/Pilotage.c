@@ -250,10 +250,10 @@ Trame PilotePositionXYT()
 	
 	tableau[0] = 0xC1;
 	tableau[1] = 0x67;
-	tableau[2] = (int)pos_x>>8;
-	tableau[3] = (int)pos_x&0x00FF;
-	tableau[4] = (int)pos_y>>8;
-	tableau[5] = (int)pos_y&0x00FF;
+	tableau[2] = (int)(pos_x * 10)>>8;
+	tableau[3] = (int)(pos_x * 10)&0x00FF;
+	tableau[4] = (int)(pos_y * 10)>>8;
+	tableau[5] = (int)(pos_y * 10)&0x00FF;
 	tableau[6] = (unsigned int)(pos_teta*36000/(2*PI)+18000)>>8;
 	tableau[7] = (unsigned int)(pos_teta*36000/(2*PI)+18000)&0x00FF;
 	
