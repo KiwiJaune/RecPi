@@ -37,8 +37,8 @@ extern double erreur_allowed;
 unsigned char scan;
 
 //2013
-unsigned int Periode_TM3 = 156;	//Varibales TIMER
-unsigned int Periode_TM5 = 156;
+unsigned int Periode_TM3 = INIT_CANON;	//Varibales TIMER
+unsigned int Periode_TM5 = INIT_TURBINE;
 
 
 void delay(void) {
@@ -59,32 +59,36 @@ void delays(void)
 void Init_Turbine(void)
 {
 	Periode_TM5 = INIT_TURBINE;		//ASPIRATEUR
-	Periode_TM3 = INIT_TURBINE;		//CANON
+	Periode_TM3 = INIT_CANON;		//CANON
 	delays();
 	delays();
 }
 
-///////////////PROG EXEMPLE////////////////////////////
+void Init_Servos(void){
+	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
+	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
+}
+
+/*----------------------Fonction : Sequence-------------------*/
 void Aspire_Et_Decharger_Balle(void)
 {
 //	Init_Turbine();
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_DEPLOYE);
-	Periode_TM5 = ASPIRATION_ACTIVE;
-	delays();
+	Aspirateur_Vitesse(ASPIRATION_ACTIVE);
 	delays();
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
 	delays();
 	delays();
-	Periode_TM5 = ASPIRATION_DESACTIVE;
+	Aspirateur_Vitesse(ASPIRATION_DESACTIVE);
 }
 
 void Ejecter_Balle(void)
 {
-	
 	unsigned int index = 0;
-	Init_Turbine();
 
-	Periode_TM3 = CANON_ACTIVE;
+	Init_Turbine();
+	Canon_Vitesse(CANON_ACTIVE);
+
 	for(index = 0;index<10;index++){
 		SHUTTER = SHUTTER_PAS_BLOQUE;
 		CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
@@ -94,8 +98,7 @@ void Ejecter_Balle(void)
 		delays();		//330ms
 	}
 }
-///////////FIN PROG EXEMPLE/////////////////////////////
-
+/*----------------------Fonction : Sequence-------------------*/
 
 //Fonction Control Shutter 
 //Arguments : 
@@ -144,10 +147,10 @@ void Init_Timer (void)
 	T3CONbits.TSIDL = 0;
 	T3CONbits.TGATE = 0;
 	T3CONbits.TCS	= 0;
-	T3CONbits.TCKPS = 0b11; //Prescaler set to 1:1
+	T3CONbits.TCKPS = 0b01; //Prescaler set to 1:1
 	
 	TMR3 = 0; 				//Clear timer register
-	PR3  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
+	PR3  = INIT_CANON; 	//Load the period value (78 = 0.5ms)
 
 	IPC2bits.T3IP = 5; 		//Set Timer3 Interrupt Priority Level
 	IFS0bits.T3IF = 0; 		//Clear Timer3 Interrupt Flag
@@ -158,7 +161,7 @@ void Init_Timer (void)
 	T5CONbits.TSIDL = 0;
 	T5CONbits.TGATE = 0;
 	T5CONbits.TCS	= 0;
-	T5CONbits.TCKPS = 0b11; //Prescaler set to 1:1
+	T5CONbits.TCKPS = 0b01; //Prescaler set to 1:1
 	
 	TMR5 = 0; 				//Clear timer register
 	PR5  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
@@ -170,6 +173,7 @@ void Init_Timer (void)
 	SIGNALTMR3_RP = 0;
 	SIGNALTMR5_RP = 0;
 }
+
 void __attribute__((__interrupt__,__auto_psv__)) _T4Interrupt(void){
    	
 	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt flag
@@ -202,8 +206,6 @@ void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
 
 	SIGNALTMR5_RP = ~PORTCbits.RC7;
 }
-
-
 
 //Fin 2013
 
@@ -276,6 +278,22 @@ Trame PilotePIDRessource()
 	trame.message = tableau;
 	
 	return trame;
+}
+Trame Presence_Balle(void)
+{
+
+	Trame Etat_Presence_Balle;
+	static BYTE Presence[3];
+	Etat_Presence_Balle.nbChar = 3;
+
+	Presence[0] = 0xC1;
+	Presence[1] = REPONSE_PRESENCE_BALLE;
+	Presence[2] = !PORTBbits.RB5;
+
+	Etat_Presence_Balle.message = Presence;
+	
+	return Etat_Presence_Balle;
+
 }
 
 void PilotePIDManual(unsigned int gauche,unsigned int droite)
@@ -735,10 +753,12 @@ Trame AnalyseTrame(Trame t)
 			Ejecter_Balle();
 		break;
 		case CMD_VITESSE_ASPIRATEUR:
-			Aspirateur_Vitesse(t.message[2]*256+t.message[3]);
+			param1 = (t.message[2]*256+t.message[3]) + 5000;			
+			Aspirateur_Vitesse(param1);
 		break;
 		case CMD_VITESSE_CANON:
-			Canon_Vitesse(t.message[2]*256+t.message[3]);
+			param1 = (t.message[2]*256+t.message[3]) + 5000;
+			Canon_Vitesse(param1);
 		break;
 		case CMD_SHUTTER: 
 			if(t.message[2])
@@ -759,6 +779,9 @@ Trame AnalyseTrame(Trame t)
 			param2 = t.message[3] * 256 + t.message[4];	// Position
 			param3 = 19100;
 			CDS5516Vit(param3, param1,param2);
+		break;
+		case DEMANDE_PRESENCE_BALLE:
+			return Presence_Balle();
 		break;
 		case 0xF2:
 			Reset();

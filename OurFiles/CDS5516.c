@@ -38,9 +38,9 @@ void CDS5516Vit(double baud,char id, unsigned int vitesse)
 	char taille = 0, instruction = 0, adresse = 0, val = 0,val1 = 0, checksum = 0;
 	int i, j;
 
-	InitUART2();	//Initialisation de la liaison série 2 (UART2)
-	U2BRG = ((FCY/baud)/4)-1;
-	
+//	InitUART2();	//Initialisation de la liaison série 2 (UART2)
+//	U2BRG = ((FCY/baud)/4)-1;
+	U2BRG = 522;
 	taille = 0x05;  															//Nbr de paramètres + 2
 	instruction = 0x03;  														//Instruction écriture valeur
 	adresse = 0x20;															

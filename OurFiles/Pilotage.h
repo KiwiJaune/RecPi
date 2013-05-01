@@ -56,24 +56,25 @@ Trame PiloteCapteurs(char cote);
 
 int Coupure(void);
 
-//FONCTION 2013
-
+// Constantes des fonctions des actionneurs
 #define ON  1
 #define OFF 0
 
-#define BRAS_DEPLOYE 155
-#define BRAS_RETRACTE 255
+#define BRAS_DEPLOYE 145
+#define BRAS_RETRACTE 280
 
 #define DEBLOQUE_BAS 550
 #define DEBLOQUE_HAUT 250
 
-#define INIT_TURBINE 156
+#define INIT_TURBINE 5000
+#define INIT_CANON 5000
 
-#define CANON_ACTIVE 172
-#define CANON_DESACTIVE 156
+#define CANON_ACTIVE 5750
+#define CANON_DESACTIVE 5000
+#define CANON_ACTIVE_MAX 10000
 
-#define ASPIRATION_ACTIVE 312
-#define ASPIRATION_DESACTIVE 156
+#define ASPIRATION_ACTIVE 11000
+#define ASPIRATION_DESACTIVE 5000
 
 #define ID_SERVO_ASPIRATEUR 16 //0
 #define ID_SERVO_DEBLOQUEUR 0  //16 ou 2
@@ -86,10 +87,17 @@ int Coupure(void);
 #define SIGNALTMR3_RP LATCbits.LATC6
 #define SIGNALTMR5_RP LATCbits.LATC7
 
+//Fonction de test des actionneurs
 void Aspire_Et_Decharger_Balle(void);
+
 void Ejecter_Balle(void);
+
 void Init_Turbine(void);
+
+void Init_Servos(void);
+
 void Canon_Vitesse(unsigned int vitesse);
+
 void Aspirateur_Vitesse(unsigned int vitesse);
 
 //Initialisation timer 3,4 et 5
@@ -145,6 +153,9 @@ Trame AnalyseTrame(Trame t);
 
 #define CMD_SERVO_POSITION          0x60
 #define CMD_SERVO_VITESSE           0x61
+
+#define DEMANDE_PRESENCE_BALLE		0x77
+#define REPONSE_PRESENCE_BALLE		0x78
 
 #define CMD_ASPIRER_BALLE			0x80
 #define CMD_EJECTER_BALLE			0x81
