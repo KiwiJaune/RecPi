@@ -15,24 +15,34 @@ void InitClk(void)
 	while(OSCCONbits.COSC != 0b011);
 	while(OSCCONbits.LOCK != 1);
 }
-// Init Clock Par Mouly 
-//FCY = 40MHz 
-void Init_Clk(void)
-{
-	
-	//External OSC  8MHz
-	//Internal PLL  80MHz Fcy = 40MHz
-	
-	PLLFBD=41; 								// M = PLLFBD + 2 
-	CLKDIVbits.PLLPOST=0;   				// N1 = 2 
-	CLKDIVbits.PLLPRE=0;    				// N2 = 2
 
-	__builtin_write_OSCCONH(0x01);			// New Oscillator FRC w/ PLL 
-    __builtin_write_OSCCONL(0x01);  		// Enable Switch 
+void Init_Input_Capture(void){
 	
-	while(OSCCONbits.COSC != 0b001);		// Wait for new Oscillator to become FRC w/ PLL 
-    while(OSCCONbits.LOCK != 1);			// Wait for Pll to Lock 
-    
+	//Set Timer3 to Capture
+	T3CONbits.TON 	= 0;	//Stops the timer
+	T3CONbits.TSIDL = 0;
+	T3CONbits.TGATE = 0;
+	T3CONbits.TCS	= 0;
+	T3CONbits.TCKPS = 0b10; //Prescaler set to 1:1
+
+//	IPC2bits.T3IP = 7; 		//Set Timer2 Interrupt Priority Level
+//	IFS0bits.T3IF = 0; 		//Clear Timer2 Interrupt Flag
+	IEC0bits.T3IE = 0; 		//Enable Timer2 interrupt	
+	
+	T3CONbits.TON = 1;
+
+	//Configurer le pin Out en RP
+	RPINR7bits.IC1R 	= 1;	//RP1
+
+	IC1CONbits.ICM		= 0;
+	IC1CONbits.ICSIDL 	= 1;
+	IC1CONbits.ICTMR	= 0;		//TM3
+	IC1CONbits.ICI		= 0b00;
+	IC1CONbits.ICM		= 0b101;		
+		
+	IPC0bits.IC1IP = 7;
+	IFS0bits.IC1IF = 0;
+	IEC0bits.IC1IE = 1;
 }
 
 void InitPWM(void)
@@ -110,9 +120,9 @@ void InitPorts()
 
 	// * : Non utilisé pour le moment, donc configure en entree
 
-	TRISA 	= 0b1111110111110101;
+	TRISA 	= 0b1111100101110101;
 	//          FEDCBA9876543210
-	TRISB 	= 0b0000001011111011;
+	TRISB 	= 0b0000001011111010;
 	//          FEDCBA9876543210
 	TRISC 	= 0b1111111000100111; //Modif de C9 et C8 : Valeur par default C9 = 0;C8 = 1
 	//          FEDCBA9876543210
@@ -139,21 +149,13 @@ void InitPorts()
     RPINR18 = 0b11000;              //RX RP25
     TRISCbits.TRISC8 = 0;
     TRISCbits.TRISC9 = 1;
-    
+
+
 	LATAbits.LATA3 = 0; 	// Alimentation OFF
 	
 	//Initialisation du sens de communication pour les AX12
 	LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
 }
-
-//void InitT2(void)
-//{
-//	T2CONbits.TCKPS = 1;	// 1:8 Prescaler
-//	PR2 = 5000;				// Time to autoreload (1 ms @40 MIPS)
-//	IFS0bits.T2IF = 0;		// Interrupt flag cleared
-//	IEC0bits.T2IE = 1;		// Interrupt enabled
-//	T2CONbits.TON = 1;		// Timer enabled
-//}
 
 void InitT2(void)
 {

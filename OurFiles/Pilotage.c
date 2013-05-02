@@ -36,10 +36,19 @@ extern double erreur_allowed;
 
 unsigned char scan;
 
-//2013
-unsigned int Periode_TM3 = INIT_CANON;	//Varibales TIMER
-unsigned int Periode_TM5 = INIT_TURBINE;
+//Extern Capteur Couleur
+extern unsigned int Tab_Capteur_Couleur[8];
 
+//2013
+unsigned int Periode_Turbine = INIT_TURBINE;	//Varibales TIMER
+unsigned int Periode_Canon = INIT_CANON;
+
+unsigned int Cpt_Tmr4_Turbine = 1;
+
+unsigned int Cpt_Tmr4 = 0;
+
+unsigned int Valeur_Capteur_Couleur = 24;
+unsigned int Old_IC1Buf = 0;
 
 void delay(void) {
     long i = 10; 
@@ -57,9 +66,9 @@ void delays(void)
 }
 
 void Init_Turbine(void)
-{
-	Periode_TM5 = INIT_TURBINE;		//ASPIRATEUR
-	Periode_TM3 = INIT_CANON;		//CANON
+{		
+	Periode_Turbine = INIT_TURBINE;	
+ 	Periode_Canon   = INIT_CANON;
 	delays();
 	delays();
 }
@@ -72,7 +81,7 @@ void Init_Servos(void){
 /*----------------------Fonction : Sequence-------------------*/
 void Aspire_Et_Decharger_Balle(void)
 {
-//	Init_Turbine();
+	Init_Turbine();
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_DEPLOYE);
 	Aspirateur_Vitesse(ASPIRATION_ACTIVE);
 	delays();
@@ -98,7 +107,7 @@ void Ejecter_Balle(void)
 		delays();		//330ms
 	}
 }
-/*----------------------Fonction : Sequence-------------------*/
+/*----------------------END Fonction : Sequence-------------------*/
 
 //Fonction Control Shutter 
 //Arguments : 
@@ -115,15 +124,16 @@ void Shutter_Pos(unsigned char Pos)
 
 void Aspirateur_Vitesse(unsigned int vitesse)
 {
-	Periode_TM5 = vitesse;
+	Periode_Turbine = vitesse;
 }
 
 void Canon_Vitesse(unsigned int vitesse)
 {
-	Periode_TM3 = vitesse;
+	Periode_Canon = vitesse;
 }
 
 //Initialisation TIMER 3,4 et 5 pour Turbine et Canon
+//Timer5 = Aspi, Timer3 = Canon
 void Init_Timer (void)
 {
 	//--Timer4
@@ -131,30 +141,16 @@ void Init_Timer (void)
 	T4CONbits.TSIDL = 0;
 	T4CONbits.TGATE = 0;
 	T4CONbits.TCS	= 0;
-	T4CONbits.TCKPS = 0b11; //Prescaler set to 1:1
+	T4CONbits.TCKPS = 0b10; //Prescaler set to 1:1
 	
 	TMR4 = 0; 				//Clear timer register
-	PR4  = 3125; 			//Load the period value (2342 = 15ms)
+	PR4  = 1; 			//Load the period value (2342 = 15ms)
 
-	IPC6bits.T4IP = 7; 		//Set Timer1 Interrupt Priority Level
+	IPC6bits.T4IP = 6; 		//Set Timer1 Interrupt Priority Level
 	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt Flag
 	IEC1bits.T4IE = 1; 		//Enable Timer1 interrupt
 	
 	T4CONbits.TON = 1;		//Starts the timer
-
-	//--Timer3
-	T3CONbits.TON 	= 0;	//Stops the timer
-	T3CONbits.TSIDL = 0;
-	T3CONbits.TGATE = 0;
-	T3CONbits.TCS	= 0;
-	T3CONbits.TCKPS = 0b01; //Prescaler set to 1:1
-	
-	TMR3 = 0; 				//Clear timer register
-	PR3  = INIT_CANON; 	//Load the period value (78 = 0.5ms)
-
-	IPC2bits.T3IP = 5; 		//Set Timer3 Interrupt Priority Level
-	IFS0bits.T3IF = 0; 		//Clear Timer3 Interrupt Flag
-	IEC0bits.T3IE = 1; 		//Enable Timer3 interrupt
 
 	//--Timer5
 	T5CONbits.TON 	= 0;	//Stops the timer
@@ -164,49 +160,62 @@ void Init_Timer (void)
 	T5CONbits.TCKPS = 0b01; //Prescaler set to 1:1
 	
 	TMR5 = 0; 				//Clear timer register
-	PR5  = INIT_TURBINE; 	//Load the period value (78 = 0.5ms)
+	PR5  = INIT_CANON; 	    //Load the period value (78 = 0.5ms)
 
-	IPC7bits.T5IP = 6; 		//Set Timer5 Interrupt Priority Level
+	IPC7bits.T5IP = 7; 		//Set Timer5 Interrupt Priority Level
 	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
 	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
 
-	SIGNALTMR3_RP = 0;
-	SIGNALTMR5_RP = 0;
+	SIGNAL_CANON   = 0;
+	SIGNAL_TURBINE = 0;
 }
 
 void __attribute__((__interrupt__,__auto_psv__)) _T4Interrupt(void){
    	
-	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt flag
-
-	SIGNALTMR3_RP = ~PORTCbits.RC6;
-	SIGNALTMR5_RP = ~PORTCbits.RC7;
-
-	TMR3 = 0; 				//Clear timer register
-	PR3  = Periode_TM3; 			//Load the period value 
-	T3CONbits.TON = 1;
+	Cpt_Tmr4++;			
+	Cpt_Tmr4_Turbine++;
 	
-	TMR5 = 0; 				//Clear timer register
-	PR5  = Periode_TM5; 			//Load the period value 
-	T5CONbits.TON = 1;
-}
+	if(Cpt_Tmr4_Turbine == Periode_Turbine){
+		SIGNAL_TURBINE = FALLING_EDGE;		
+	}
 
-void __attribute__((__interrupt__,__auto_psv__)) _T3Interrupt(void){
-   	
-	T3CONbits.TON = 0;		//Stops the timer
-	IFS0bits.T3IF = 0; 		//Clear Timer1 Interrupt flag
+	if(Cpt_Tmr4 == 6250){
+	
+		SIGNAL_TURBINE = RISING_EDGE;
+		SIGNAL_CANON   = ~PORTCbits.RC6;
 
-	SIGNALTMR3_RP = ~PORTCbits.RC6;
+		TMR5 = 0; 					
+		PR5  = Periode_Canon; 			
+		T5CONbits.TON = 1;
 
+		Cpt_Tmr4 = 0;
+		Cpt_Tmr4_Turbine = 0;
+	}
+	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt flag
 }
 
 void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
-   	
-	T5CONbits.TON = 0;		//Stops the timer
+
+	T5CONbits.TON = 0;
 	IFS1bits.T5IF = 0; 		//Clear Timer1 Interrupt flag
 
-	SIGNALTMR5_RP = ~PORTCbits.RC7;
+	SIGNAL_CANON   = ~PORTCbits.RC6;	
 }
 
+//Interruption Input Capture
+void __attribute__((__interrupt__,__auto_psv__)) _IC1Interrupt(void)
+{
+	unsigned int t1,t2;
+	t2=IC1BUF;
+	t1=IC1BUF;
+
+	IFS0bits.IC1IF=0;
+
+	if(t2>t1)
+		Valeur_Capteur_Couleur = t2-t1;
+	else
+		Valeur_Capteur_Couleur = (PR3 - t1) + t2;
+}
 //Fin 2013
 
 
@@ -293,6 +302,50 @@ Trame Presence_Balle(void)
 	Etat_Presence_Balle.message = Presence;
 	
 	return Etat_Presence_Balle;
+
+}
+
+unsigned int Send_Variable_Capteur_Couleur(void){
+	return Valeur_Capteur_Couleur;		
+}
+
+Trame Couleur_Balle(void)
+{
+
+	Trame Couleur_Balle;
+	static BYTE Couleur[18];
+	Couleur_Balle.nbChar = 18;
+
+	Couleur[0] = 0xC1;
+	Couleur[1] = REPONSE_COULEUR_BALLE;
+
+	Couleur[2] = Tab_Capteur_Couleur[0]>>8;
+	Couleur[3] = Tab_Capteur_Couleur[0]&0x00FF;
+
+	Couleur[4] = Tab_Capteur_Couleur[1]>>8;
+	Couleur[5] = Tab_Capteur_Couleur[1]&0x00FF;
+
+	Couleur[6] = Tab_Capteur_Couleur[2]>>8;
+	Couleur[7] = Tab_Capteur_Couleur[2]&0x00FF;
+
+	Couleur[8] = Tab_Capteur_Couleur[3]>>8;
+	Couleur[9] = Tab_Capteur_Couleur[3]&0x00FF;
+
+	Couleur[10] = Tab_Capteur_Couleur[4]>>8;
+	Couleur[11] = Tab_Capteur_Couleur[4]&0x00FF;
+
+	Couleur[12] = Tab_Capteur_Couleur[5]>>8;
+	Couleur[13] = Tab_Capteur_Couleur[5]&0x00FF;
+
+	Couleur[14] = Tab_Capteur_Couleur[6]>>8;
+	Couleur[15] = Tab_Capteur_Couleur[6]&0x00FF;
+
+	Couleur[16] = Tab_Capteur_Couleur[7]>>8;
+	Couleur[17] = Tab_Capteur_Couleur[7]&0x00FF;
+
+	Couleur_Balle.message = Couleur;
+	
+	return Couleur_Balle;
 
 }
 
@@ -753,7 +806,7 @@ Trame AnalyseTrame(Trame t)
 			Ejecter_Balle();
 		break;
 		case CMD_VITESSE_ASPIRATEUR:
-			param1 = (t.message[2]*256+t.message[3]) + 5000;			
+			param1 = (t.message[2]*256+t.message[3]) + 313;			
 			Aspirateur_Vitesse(param1);
 		break;
 		case CMD_VITESSE_CANON:
@@ -782,6 +835,9 @@ Trame AnalyseTrame(Trame t)
 		break;
 		case DEMANDE_PRESENCE_BALLE:
 			return Presence_Balle();
+		break;
+		case DEMANDE_COULEUR:
+			return Couleur_Balle();
 		break;
 		case 0xF2:
 			Reset();

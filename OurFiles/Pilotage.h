@@ -66,15 +66,15 @@ int Coupure(void);
 #define DEBLOQUE_BAS 550
 #define DEBLOQUE_HAUT 250
 
-#define INIT_TURBINE 5000
+#define INIT_TURBINE 312 //Previous Value 5000
 #define INIT_CANON 5000
 
-#define CANON_ACTIVE 5750
+#define CANON_ACTIVE 5500
 #define CANON_DESACTIVE 5000
 #define CANON_ACTIVE_MAX 10000
 
-#define ASPIRATION_ACTIVE 11000
-#define ASPIRATION_DESACTIVE 5000
+#define ASPIRATION_ACTIVE 625
+#define ASPIRATION_DESACTIVE 312
 
 #define ID_SERVO_ASPIRATEUR 16 //0
 #define ID_SERVO_DEBLOQUEUR 0  //16 ou 2
@@ -84,8 +84,11 @@ int Coupure(void);
 #define SHUTTER_PAS_BLOQUE 1
 #define SHUTTER LATAbits.LATA1
 
-#define SIGNALTMR3_RP LATCbits.LATC6
-#define SIGNALTMR5_RP LATCbits.LATC7
+#define SIGNAL_TURBINE LATCbits.LATC7
+#define SIGNAL_CANON LATCbits.LATC6
+
+#define RISING_EDGE 1
+#define FALLING_EDGE 0 
 
 //Fonction de test des actionneurs
 void Aspire_Et_Decharger_Balle(void);
@@ -99,6 +102,8 @@ void Init_Servos(void);
 void Canon_Vitesse(unsigned int vitesse);
 
 void Aspirateur_Vitesse(unsigned int vitesse);
+
+unsigned int Send_Variable_Capteur_Couleur(void);
 
 //Initialisation timer 3,4 et 5
 void Init_Timer (void);
@@ -153,6 +158,9 @@ Trame AnalyseTrame(Trame t);
 
 #define CMD_SERVO_POSITION          0x60
 #define CMD_SERVO_VITESSE           0x61
+
+#define DEMANDE_COULEUR				0x75
+#define REPONSE_COULEUR_BALLE   	0x76
 
 #define DEMANDE_PRESENCE_BALLE		0x77
 #define REPONSE_PRESENCE_BALLE		0x78

@@ -20,6 +20,10 @@ _FPOR(FPWRT_PWR1)
 _FWDT(FWDTEN_OFF)// & SWDTEN_OFF)
 _FICD(ICS_PGD3 & JTAGEN_OFF)
 
+//Define Capteur Couleur
+#define LED LATAbits.LATA7
+#define S2 LATBbits.LATB0 
+#define S3 LATAbits.LATA10 
 
 // TODO list
 // * Self-calibration de l'odométrie
@@ -61,6 +65,11 @@ double position_lock;
 //double datalogger_dr[500]={0};
 unsigned int datalogger_counter=0,flag=0,courrier=0,PID_ressource_used;
 unsigned char flag_envoi=0,flag_distance=0,flag_blocage=0,flag_calage=0;
+
+//Variable Capteur Couleur
+unsigned int Cpt_Tmr2_Capteur_Couleur = 0;
+unsigned int Tab_Capteur_Couleur[8] = {0};
+unsigned char etat_Capteur_Couleur = 0;
 
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
@@ -126,6 +135,9 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
+	
+	PORTAbits.RA7 = 1;
+
     Init_Timer();	
     
 	InitQEI(); 		// Initialisation des entrées en quadrature
@@ -164,15 +176,17 @@ int main(void)
 	InitUART2();
 	Init_Turbine(); //Initialisé après Init_Timer
 	Init_Servos();
+	Init_Input_Capture();
 	
+	TRISAbits.TRISA10 = 0;
+
 	while(1)
   {	
-//		Aspire_Et_Decharger_Balle();
+//    	Aspire_Et_Decharger_Balle();
 //		delays(); 
 //		Ejecter_Balle();
 //		delays(); 
 //		delays();
-
 		if(flag_envoi) 
 		{	
 			scan=0;
@@ -505,5 +519,65 @@ void __attribute__ ((interrupt, no_auto_psv)) _T2Interrupt(void)
 		datalogger_dr[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_DROIT);
 	}*/
 	PID_ressource_used = TMR2;
+
+	Cpt_Tmr2_Capteur_Couleur++;
+
+	if(Cpt_Tmr2_Capteur_Couleur == 20)
+	{
+		Cpt_Tmr2_Capteur_Couleur = 0;
+
+		switch(++etat_Capteur_Couleur){
+
+			case 1:
+				Tab_Capteur_Couleur[0] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 0;
+				LED = 0;
+			break;
+			case 2:
+				Tab_Capteur_Couleur[1] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 0;
+				LED = 0;
+			break;
+			case 3:
+				Tab_Capteur_Couleur[2] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 1;
+				LED = 0;
+			break;
+			case 4:
+				Tab_Capteur_Couleur[3] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 1;
+				LED = 0;
+			break;
+			case 5:
+				Tab_Capteur_Couleur[4] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 0;
+				LED = 1;
+			break;
+			case 6:
+				Tab_Capteur_Couleur[5] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 0;
+				LED = 1;
+			break;
+			case 7:
+				Tab_Capteur_Couleur[6] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 1;
+				LED = 1;
+			break;
+			case 8:
+				Tab_Capteur_Couleur[7] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 1;
+				LED = 1;
+				etat_Capteur_Couleur = 0;
+			break;
+		}
+	}
 	IFS0bits.T2IF = 0;
 }
