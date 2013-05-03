@@ -78,37 +78,6 @@ void Init_Servos(void){
 	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
 }
 
-/*----------------------Fonction : Sequence-------------------*/
-void Aspire_Et_Decharger_Balle(void)
-{
-	Init_Turbine();
-	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_DEPLOYE);
-	Aspirateur_Vitesse(ASPIRATION_ACTIVE);
-	delays();
-	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
-	delays();
-	delays();
-	Aspirateur_Vitesse(ASPIRATION_DESACTIVE);
-}
-
-void Ejecter_Balle(void)
-{
-	unsigned int index = 0;
-
-	Init_Turbine();
-	Canon_Vitesse(CANON_ACTIVE);
-
-	for(index = 0;index<10;index++){
-		SHUTTER = SHUTTER_PAS_BLOQUE;
-		CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
-		delayms();
-		SHUTTER = SHUTTER_BLOQUE;
-		CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_HAUT);
-		delays();		//330ms
-	}
-}
-/*----------------------END Fonction : Sequence-------------------*/
-
 //Fonction Control Shutter 
 //Arguments : 
 //0 Shutter ne bloque pas
@@ -225,12 +194,7 @@ Trame PiloteGotoXY(int x,int y, unsigned char x_negatif, unsigned char y_negatif
 	Trame trame;
 	static BYTE tableau[6];
 	trame.nbChar = 6;
-	double xfinal,yfinal;
-	
-	/*if(x_negatif)	xfinal = (double)(-x);
-	else			xfinal = (double)(x);
-	if(y_negatif)	yfinal = (double)(-y);
-	else			yfinal = (double)(y);*/
+
 	GotoXY((double)x,(double)y,0);
 	
 	tableau[0] = 1;
@@ -260,7 +224,7 @@ Trame PilotePositionXYT()
 	trame.nbChar = 8;
 	
 	tableau[0] = 0xC1;
-	tableau[1] = 0x67;
+	tableau[1] = CMD_RETOURPOSITION;
 	tableau[2] = (int)(pos_x * 10)>>8;
 	tableau[3] = (int)(pos_x * 10)&0x00FF;
 	tableau[4] = (int)(pos_y * 10)>>8;
@@ -296,7 +260,7 @@ Trame Presence_Balle(void)
 	Etat_Presence_Balle.nbChar = 3;
 
 	Presence[0] = 0xC1;
-	Presence[1] = REPONSE_PRESENCE_BALLE;
+	Presence[1] = CMD_REPONSE_PRESENCE_BALLE;
 	Presence[2] = !PORTBbits.RB5;
 
 	Etat_Presence_Balle.message = Presence;
@@ -317,7 +281,7 @@ Trame Couleur_Balle(void)
 	Couleur_Balle.nbChar = 18;
 
 	Couleur[0] = 0xC1;
-	Couleur[1] = REPONSE_COULEUR_BALLE;
+	Couleur[1] = CMD_REPONSE_COULEUR_BALLE;
 
 	Couleur[2] = Tab_Capteur_Couleur[0]>>8;
 	Couleur[3] = Tab_Capteur_Couleur[0]&0x00FF;
@@ -642,6 +606,8 @@ int PiloteOffsetAsserv(int x, int y, int teta) // marche pas
 	pos_x = -y;
 	pos_y = -x;
 	offset_teta = (teta/180*PI) / 100.0 - pos_teta;
+
+	return 1;
 }
 
 // Analyse la trame recue et renvoie vers la bonne fonction de pilotage
@@ -649,15 +615,13 @@ int PiloteOffsetAsserv(int x, int y, int teta) // marche pas
 Trame AnalyseTrame(Trame t)
 {
 	Trame retour;
-	Trame debug;
 	unsigned int param1, param2, param3, param4;
 	
-	unsigned char i;
 	retour = t;
 
 	// Les messages ne commencant pas par 0xC1 ne nous sont pas adressés (RecMove)
 	if(t.message[0] != 0xC1)
-		return;
+		return t;
 
 	switch(t.message[1])
 	{
@@ -748,13 +712,16 @@ Trame AnalyseTrame(Trame t)
 
 		break;
 
+		case CMD_DEMANDEPOSITION: // Demande POS X Y TETA
+			retour = PilotePositionXYT();
+		break;
+
+		// Debug asserv : Nouvelles commandes à attribuer
+		/*
 		case 0x37: // INIT
 			PilotPIDInit();
 		break;
 
-		case 0x67: // POS X Y TETA
-			retour = PilotePositionXYT();
-		break;
 
 		case 0x39: // PID RESSOURCE
 			retour = PilotePIDRessource();
@@ -777,12 +744,6 @@ Trame AnalyseTrame(Trame t)
 			retour = PiloteGetBuffPosition();
 		break;
 
-		/*case 0x46:
-			param1 = t.message[2]*256+t.message[3];
-			param2 = t.message[4]*256+t.message[5];
-			PilotePIDManual(param1,param2);
-		break;*/
-
 		case 0x47:
 			param1 = t.message[2]*256+t.message[3];
 			PilotePIDBridage(param1);
@@ -796,29 +757,29 @@ Trame AnalyseTrame(Trame t)
 			param1 = t.message[2]*256+t.message[3];
 			feedforward = (double)param1;
 		break;
+		*/
+
 		case 0x90: //CMD_COUPURE:
 			Coupure();
 		break;
-		case CMD_ASPIRER_BALLE: 
-			Aspire_Et_Decharger_Balle();
-		break;
-		case CMD_EJECTER_BALLE: 
-			Ejecter_Balle();
-		break;
+
 		case CMD_VITESSE_ASPIRATEUR:
 			param1 = (t.message[2]*256+t.message[3]) + 313;			
 			Aspirateur_Vitesse(param1);
 		break;
+
 		case CMD_VITESSE_CANON:
 			param1 = (t.message[2]*256+t.message[3]) + 5000;
 			Canon_Vitesse(param1);
 		break;
+
 		case CMD_SHUTTER: 
 			if(t.message[2])
 				Shutter_Pos(SHUTTER_BLOQUE);
 			else 
 				Shutter_Pos(SHUTTER_PAS_BLOQUE);
 		break;	
+
 		case CMD_SERVO_POSITION:
 			// Bouge servomoteur
 			param1 = t.message[2];						// Id servo
@@ -826,6 +787,7 @@ Trame AnalyseTrame(Trame t)
 			param3 = 19100;
 			CDS5516Pos(param3,param1,param2);
 		break;	
+
 		case CMD_SERVO_VITESSE:
 			// Bouge servomoteur
 			param1 = t.message[2];						// Id servo
@@ -833,12 +795,15 @@ Trame AnalyseTrame(Trame t)
 			param3 = 19100;
 			CDS5516Vit(param3, param1,param2);
 		break;
-		case DEMANDE_PRESENCE_BALLE:
+
+		case CMD_DEMANDE_PRESENCE_BALLE:
 			return Presence_Balle();
 		break;
-		case DEMANDE_COULEUR:
+
+		case CMD_DEMANDE_COULEUR:
 			return Couleur_Balle();
 		break;
+
 		case 0xF2:
 			Reset();
 			break;

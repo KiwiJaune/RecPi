@@ -10,3 +10,5 @@ void Init_Clk(void);
 #define  MAX_CHNUM	 			7		// Highest Analog input number in Channel Scan
 #define  SAMP_BUFF_SIZE	 		8		// Size of the input buffer per analog input
 #define  NUM_CHS2SCAN			8		// Number of channels enabled for channel scan
+
+void Init_Input_Capture(void);

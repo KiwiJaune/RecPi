@@ -115,7 +115,7 @@ void EnvoiStringUdp(const char *string)
 	mess[2+i]='\0';
 	
 	envoi.nbChar = 2+i;
-	envoi.message[2] = mess;
+	envoi.message = mess;
 	
 	EnvoiUserUdp(envoi);
 }

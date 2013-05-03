@@ -130,8 +130,10 @@ void GotoXY(double x, double y, unsigned char reculer)
 	angle = atan(dx/dy)+pos_teta; // = arctan(dx/dy) + pos_teta
 	angle = -angle;
 	if(dy<0)
+	{
 		if(dx>0)	angle += PI;
 		else		angle -= PI;
+	}	
 	if(angle> PI) angle -=2*PI;
 	if(angle<-PI) angle +=2*PI;	
 
@@ -313,7 +315,7 @@ unsigned char Motors_Task(void)
 	static double decel_point[N],origi_point[N];
 	static double speed_max[N],accel_max[N];
 	static double speed[N],accel[N];
-	double delta_x, delta_y, lcurvi, vitesse, teta_ori;
+	double delta_x, delta_y, lcurvi, vitesse;
 	static double lcurvi_old;
 	unsigned char retour = 0;
 	static double old_posi[N];
@@ -500,7 +502,7 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 {
 	unsigned char i;
 	double cor[N];
-	static double erreur_old[N]={0},erreur_sum[N]={0};
+	static double erreur_old[N]={0};
 	
 
 	if(flagdefinehome)

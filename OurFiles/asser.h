@@ -53,6 +53,8 @@
 #define SMOOTH			1
 #define ABRUPT			2
 
+unsigned char Motors_Task(void);
+void manual_pid(double moteurga, double moteurdr);
 void InitProp(void);
 void Avance(double distance, unsigned char wait);
 void Pivot(double angle,unsigned char wait);

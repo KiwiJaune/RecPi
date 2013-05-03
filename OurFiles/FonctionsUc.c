@@ -138,7 +138,7 @@ void InitUART2() {
 	T2CONbits.TON = 1;		// Timer enabled
 }*/
 
-/*
+
 
 /*float _abs(float value)
 {

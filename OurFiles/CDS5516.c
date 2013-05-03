@@ -5,8 +5,8 @@
 //Contrôle en angle du cds5516 (0 à 1023 soit 0° à 300°)
 void CDS5516Pos(double baud,char id, int position)
 {
-	char taille = 0, instruction = 0, adresse = 0, val = 0,val1 = 0,val2 = 0,val3 = 0, checksum = 0;
-	int i, j;
+	char taille = 0, instruction = 0, adresse = 0, val = 0,val1 = 0, checksum = 0;
+	int i;
 
 	//InitUART2();	//Initialisation de la liaison série 2 (UART2)
 	//U2BRG = ((FCY/baud)/4)-1;
@@ -36,7 +36,7 @@ void CDS5516Pos(double baud,char id, int position)
 void CDS5516Vit(double baud,char id, unsigned int vitesse)
 {
 	char taille = 0, instruction = 0, adresse = 0, val = 0,val1 = 0, checksum = 0;
-	int i, j;
+	int i;
 
 //	InitUART2();	//Initialisation de la liaison série 2 (UART2)
 //	U2BRG = ((FCY/baud)/4)-1;
@@ -65,8 +65,8 @@ void CDS5516Vit(double baud,char id, unsigned int vitesse)
 //Allumer la led du CDS5516
 void CDS5516Led(double baud,char id, char led)
 {
-	char taille = 0, instruction = 0, adresse = 0, val = 0, checksum = 0;
-	int i, j;
+	char taille = 0, instruction = 0, adresse = 0, checksum = 0;
+	int i;
 	
 	//InitUART2();	//Initialisation de la liaison série 2 (UART2)
 	//U2BRG = ((FCY/baud)/4)-1;
@@ -93,8 +93,8 @@ void CDS5516Led(double baud,char id, char led)
 //Chercher le Baudrate du CDS5516
 void CDS5516searchBaudrate(char id, double baudratemin, double baudratemax, char led)
 {
-	char taille = 0, instruction = 0, adresse = 0, val = 0, checksum = 0;
-	int i, j;
+	char taille = 0, instruction = 0, adresse = 0, checksum = 0;
+	int i;
 	double baud;
 
 	for(baud = baudratemin;baud <= baudratemax;baud++)
@@ -124,8 +124,8 @@ void CDS5516searchBaudrate(char id, double baudratemin, double baudratemax, char
 //Reset du CDS5516
 void CDS5516reset(char id, double baudratemin, double baudratemax)
 {
-	char taille = 0, instruction = 0, adresse = 0, val = 0, checksum = 0;
-	int i, j;
+	char taille = 0, instruction = 0, checksum = 0;
+	int i;
 	double baud;
 
 	for(baud = baudratemin;baud <= baudratemax;baud++)
@@ -153,7 +153,7 @@ void CDS5516reset(char id, double baudratemin, double baudratemax)
 void CDS5516enableTorque(double baud, char id, unsigned int enableTorque)
 {
 	char taille = 0, instruction = 0, adresse = 0, checksum = 0;
-	int i, j;
+	int i;
 
 	InitUART2();	//Initialisation de la liaison série 2 (UART2)
 	U2BRG = ((FCY/baud)/4)-1;
@@ -181,7 +181,7 @@ void CDS5516enableTorque(double baud, char id, unsigned int enableTorque)
 void CDS5516bauderate(double baud,char id, char finalBauderate)
 {
 	char taille = 0, instruction = 0, adresse = 0, val = 0, checksum = 0;
-	int i, j;
+	int i;
 
 	InitUART2();	//Initialisation de la liaison série 2 (UART2)
 	U2BRG = ((FCY/baud)/4)-1;
@@ -209,7 +209,7 @@ void CDS5516bauderate(double baud,char id, char finalBauderate)
 void CDS5516id(double baud,char id, char newID)
 {
 	char taille = 0, instruction = 0, adresse = 0, val = 0, checksum = 0;
-	int i, j;
+	int i;
 
 	InitUART2();	//Initialisation de la liaison série 2 (UART2)
 	U2BRG = ((FCY/baud)/4)-1;
@@ -237,7 +237,7 @@ void CDS5516id(double baud,char id, char newID)
 void CDS5516maxTorque(double baud,char id, int maxTorque)
 {
 	char taille = 0, instruction = 0, adresse = 0, val = 0,val1 = 0, checksum = 0;
-	int i, j;
+	int i;
 
 	InitUART2();	//Initialisation de la liaison série 2 (UART2)
 	U2BRG = ((FCY/baud)/4)-1;

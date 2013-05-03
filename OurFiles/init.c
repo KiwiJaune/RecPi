@@ -16,7 +16,8 @@ void InitClk(void)
 	while(OSCCONbits.LOCK != 1);
 }
 
-void Init_Input_Capture(void){
+void Init_Input_Capture(void)
+{
 	
 	//Set Timer3 to Capture
 	T3CONbits.TON 	= 0;	//Stops the timer

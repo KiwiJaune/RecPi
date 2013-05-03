@@ -52,7 +52,6 @@ APP_CONFIG AppConfig;
 // Private helper functions.
 // These may or may not be present in all applications.
 static void InitAppConfig(void);
-static void InitializeBoard(void);
 
 extern unsigned int ADC_Results[8];
 extern double cons_pos[N];
@@ -84,31 +83,24 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 
 int main(void)
 {
-	unsigned int dataplayer_counter,i,Text[50];
-	unsigned char demo=0,flagerror=0;
+	unsigned char demo=0;
 	unsigned char hold_blocage;
 
-	double test;
-	double vide[2];
-	Trame flagEtape;
-	static BYTE messEtape[3];
-
-	static TICK t = 0;
 	static DWORD dwLastIP = 0;
 	
 	Trame envoiFin;
 	static BYTE mess[2];
 	mess[0] = 0xC1;
-	mess[1] = 0x50;
+	mess[1] = CMD_FINDEPLACEMENT;
 	envoiFin.message = mess;
 	envoiFin.nbChar = 2;
 	
-	Trame envoiDistance;
+	/*Trame envoiDistance;
 	static BYTE messdistance[4];
 	messdistance[0] = 0xC1;
 	messdistance[1] = 0x50;
 	envoiDistance.message = messdistance;
-	envoiDistance.nbChar = 4;
+	envoiDistance.nbChar = 4;*/
 	
 	Trame envoiBlocage;
 	static BYTE messblocage[2];
@@ -120,7 +112,7 @@ int main(void)
 	Trame envoiCalage;
 	static BYTE messcalage[2];
 	messcalage[0] = 0xC1;
-	messcalage[1] = 0x11;
+	messcalage[1] = CMD_FINRECALLAGE;
 	envoiCalage.message = messcalage;
 	envoiCalage.nbChar = 2;
 
@@ -181,12 +173,7 @@ int main(void)
 	TRISAbits.TRISA10 = 0;
 
 	while(1)
-  {	
-//    	Aspire_Et_Decharger_Balle();
-//		delays(); 
-//		Ejecter_Balle();
-//		delays(); 
-//		delays();
+  	{	
 		if(flag_envoi) 
 		{	
 			scan=0;
@@ -487,9 +474,9 @@ void SaveAppConfig(void)
 
 void __attribute__ ((interrupt, no_auto_psv)) _T2Interrupt(void) 
 {
-	flag=0;
-	courrier=1;
-	motor_flag=Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
+	flag = 0;
+	courrier = 1;
+	motor_flag = Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
 	if(motor_flag == 0x10)
 	{
 		motor_flag=0;
