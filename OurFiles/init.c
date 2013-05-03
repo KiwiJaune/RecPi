@@ -136,9 +136,9 @@ void InitPorts()
 	RPINR14bits.QEA1R = 3;			// CHAg			<==> RP3 
 	RPINR14bits.QEB1R = 16;			// CHBg			<==> RP16 
 
-	RPOR10bits.RP20R = 0b01000;  // SCK1 <==> RP20 RC4  //23/01/2013
-	RPINR20bits.SDI1R = 0b10101; // SDI1 <==> RP21 RC5  //23/01/2013
-	RPOR9bits.RP19R = 0b00111;   // SDO1 <==> RP19 RC3  //23/01/2013
+	RPOR10bits.RP20R  = 0b01000;  	// SCK1 <==> RP20 RC4  //23/01/2013
+	RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5  //23/01/2013
+	RPOR9bits.RP19R   = 0b00111;   	// SDO1 <==> RP19 RC3  //23/01/2013
 	
 	//Configuration des ports pour la liaison UART2 des CDS
 //	RPINR19bits.U2RXR	= 24;	// Rx	<==> RP24-RC8

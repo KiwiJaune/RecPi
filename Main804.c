@@ -135,8 +135,6 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
-	
-	PORTAbits.RA7 = 1;
 
     Init_Timer();	
     
@@ -177,8 +175,6 @@ int main(void)
 	Init_Turbine(); //Initialisé après Init_Timer
 	Init_Servos();
 	Init_Input_Capture();
-	
-	TRISAbits.TRISA10 = 0;
 
 	while(1)
   {	
