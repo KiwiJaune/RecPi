@@ -87,7 +87,7 @@ int main(void)
 	unsigned int dataplayer_counter,i,Text[50];
 	unsigned char demo=0,flagerror=0;
 	unsigned char hold_blocage;
-
+	unsigned char jackAvant = 1, etatCouleur = 2;
 	double test;
 	double vide[2];
 	Trame flagEtape;
@@ -95,7 +95,22 @@ int main(void)
 
 	static TICK t = 0;
 	static DWORD dwLastIP = 0;
-	
+
+	Trame Jack;
+	static BYTE Presence[2];
+	Jack.nbChar = 2;
+	Presence[0] = 0xC1;
+	Presence[1] = REPONSE_PRESENCE_JACK;
+	Jack.message = Presence;
+
+	Trame Couleur_Equipe;
+	static BYTE Couleur[3];
+	Couleur_Equipe.nbChar = 3;
+	Couleur[0] = 0xC1;
+	Couleur[1] = REPONSE_COULEUR_EQUIPE;
+	Couleur[2] = PORTBbits.RB4;
+	Couleur_Equipe.message = Couleur;
+
 	Trame envoiFin;
 	static BYTE mess[2];
 	mess[0] = 0xC1;
@@ -176,8 +191,22 @@ int main(void)
 	Init_Servos();
 	Init_Input_Capture();
 
+
+
 	while(1)
-  {	
+  	{	
+	  	if(!PORTAbits.RA8 && jackAvant)
+	  	{
+		  	EnvoiUserUdp (Jack);
+		  	jackAvant = 0;
+		}
+		if(etatCouleur != PORTBbits.RB4)
+		{
+			Couleur[2] = PORTBbits.RB4;
+  			EnvoiUserUdp (Couleur_Equipe);
+  			etatCouleur = PORTBbits.RB4;
+  		}
+  		 			
 //    	Aspire_Et_Decharger_Balle();
 //		delays(); 
 //		Ejecter_Balle();

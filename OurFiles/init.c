@@ -98,7 +98,7 @@ void InitPorts()
 	// 6 | I | RP6  | RB6  : PROG_PGC & Switchs assiette
 	// 7 | I | RP7  | RB7  : ETH_INT
 	// 8 | O | RP8  | RB8  : I2C_SCL
-	// 9 | X | RP9  | RB9  : I2C_SDA
+	// 9 | X | RP9  | RB9  : Présence_Aspirateur(I2C_SDA)
 	// A | O | RP10 | RB10 : Pompe à vide
 	// B | O | RP11 | RB11 : Servo assiette
 	// C | O | RP12 | RB12 : Moteur_Gauche_DIR
