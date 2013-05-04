@@ -103,7 +103,7 @@ void TickInit(void)
 
 	// Enable timer interrupt
 	#if defined(__C30__)
-		IPC0bits.T1IP = 3;	// Interrupt priority 2 (low)
+//		IPC0bits.T1IP = 3;	// Interrupt priority 2 (low)
 		IFS0bits.T1IF = 0;
 	#else
 		IPC1bits.T1IP = 2;	// Interrupt priority 2 (low)

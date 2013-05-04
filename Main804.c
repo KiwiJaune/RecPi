@@ -83,7 +83,6 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 
 int main(void)
 {
-	unsigned char demo=0;
 	unsigned char hold_blocage;
 	unsigned char jackAvant = 1, etatCouleur = 2;
 	static DWORD dwLastIP = 0;
@@ -143,11 +142,10 @@ int main(void)
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
 
-    Init_Timer();	
+    Init_Timer();	// Initialisation Timer2,Timer4 & Timer5
     
 	InitQEI(); 		// Initialisation des entrées en quadrature
 	InitPWM();		// Configuration du module PWM 
-	InitT2();		// Configuration du timer 2	
 //	InitADC();
 //	InitDMA();
 	InitProp();
@@ -167,22 +165,17 @@ int main(void)
  	UDPPerformanceTask();
 	InitUserUdp();
 	
-	//INTERRUPT PRIORITY
-	IPC4bits.SI2C1IP = 7;
-//	IPC1bits.T2IP = 4;
-	IPC14bits.QEI1IP = 5;
-	IPC18bits.QEI2IP = 5;								
-	
-	demo=4;
+	// Interrupt Priority
+	Init_Interrupt_Priority();							
 
 	hold_blocage=0;
 	
-// Initialisation de la liaison série 2 (UART2)
-	InitUART2();
-	Init_Turbine(); //Initialisé après Init_Timer
+	InitUART2();	// Initialisation de la liaison série 2 (UART2)
+	Init_Turbine(); // Initialisé après Init_Timer
 	Init_Servos();
+	Init_Pompe();
 	Init_Input_Capture();
-
+	Init_Interrupt_Priority();
 
 
 	while(1)
@@ -223,70 +216,6 @@ int main(void)
 			flag_calage = 0;
 		}
 		
-//		//	motor_flag=Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
-//		/*
-//		if(courrier)
-//		{
-//			switch(motor_flag)
-//			{
-//				case 0x00:		break;
-//				case 0x01:
-//				case 0x02:
-//				case 0x03:
-//				case 0x04:
-//				case 0x05:	messEtape[0] = 1;
-//							messEtape[1] = 0x21;
-//							messEtape[2] = motor_flag;
-//							flagEtape.message = messEtape;
-//							flagEtape.nbChar = 3;
-//							//EnvoiUserUdp(flagEtape);			//A remettre pour etape
-//							break;
-//						
-//		
-//				case 0x10:	EnvoiUserUdp(envoiFin);
-//							break;
-//				case 0x20:	//if(hold_blocage==0)                // A remettre pour blocage 
-//							//EnvoiUserUdp(envoiBlocage);
-//							//hold_blocage=1;
-//							break;
-//				case 0xFF:	//EnvoiUserUdp(envoiBlocage); // A coder...
-//							datalogger_blocker=1;
-//							Stop(ABRUPT);
-//							for(dataplayer_counter=0;dataplayer_counter<500;dataplayer_counter++)
-//							{
-//								if(datalogger_counter>0)	datalogger_counter--;
-//								else						datalogger_counter=499;
-//								manual_pid(datalogger_ga[datalogger_counter],datalogger_dr[datalogger_counter]);
-//								Tempo1mS(1);
-//							}
-//							datalogger_blocker=0;
-//							break;
-//				default:
-//							break;
-//			}
-//			if(motor_flag != 0x20) hold_blocage=0;
-//			courrier=0;
-//		}
-//		*/
-//		
-//
-///*		for(i=0;i<N;i++) // Constat, au bout de quelques run demo=4, il y a un depassement systématique de l'erreur ; peut être que c'était a cause de abs() au lieu de fabs()
-//		{
-//			if((fabs(cons_pos[0]-real_pos[0]) > 10) || (fabs(cons_pos[1]-real_pos[1]) > 10))
-//			{
-//				// Seuil de detection blocage
-//				distanceRestante = fabs(((targ_pos[0]-real_pos[0])+targ_pos[1]-real_pos[1])/2);
-//
-//				while(1)
-//				{
-//					pwm(GAUCHE,-500);
-//					pwm(DROITE,500);
-//				}
-//			}
-//		}
-//
-//		*/
-//    	
 		StackTask();
 		trame = ReceptionUserUdp();
 		if(trame.nbChar != 0)

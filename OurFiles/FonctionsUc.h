@@ -16,6 +16,5 @@
 //void Tempo1mS(unsigned int nbr);
 //void Tempo1uS(unsigned int nbr);
 void InitUART2(void);
-//void InitT2(void);
 //float _abs(float value);
 void UART2PutChar( char ch );

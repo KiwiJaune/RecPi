@@ -1,5 +1,6 @@
 #include <p33FJ128MC804.h>
 #include "init.h"
+#include "Pilotage.h"
 
 unsigned int  BufferA[MAX_CHNUM+1][SAMP_BUFF_SIZE] __attribute__((space(dma),aligned(256)));
 unsigned int  BufferB[MAX_CHNUM+1][SAMP_BUFF_SIZE] __attribute__((space(dma),aligned(256)));
@@ -16,64 +17,21 @@ void InitClk(void)
 	while(OSCCONbits.LOCK != 1);
 }
 
-void Init_Input_Capture(void)
-{
+void Init_Interrupt_Priority(void){
 	
-	//Set Timer3 to Capture
-	T3CONbits.TON 	= 0;	//Stops the timer
-	T3CONbits.TSIDL = 0;
-	T3CONbits.TGATE = 0;
-	T3CONbits.TCS	= 0;
-	T3CONbits.TCKPS = 0b10; //Prescaler set to 1:1
-
-//	IPC2bits.T3IP = 7; 		//Set Timer2 Interrupt Priority Level
-//	IFS0bits.T3IF = 0; 		//Clear Timer2 Interrupt Flag
-	IEC0bits.T3IE = 0; 		//Enable Timer2 interrupt	
-	
-	T3CONbits.TON = 1;
-
-	//Configurer le pin Out en RP
-	RPINR7bits.IC1R 	= 1;	//RP1
-
-	IC1CONbits.ICM		= 0;
-	IC1CONbits.ICSIDL 	= 1;
-	IC1CONbits.ICTMR	= 0;		//TM3
-	IC1CONbits.ICI		= 0b00;
-	IC1CONbits.ICM		= 0b101;		
-		
-	IPC0bits.IC1IP = 7;
-	IFS0bits.IC1IF = 0;
-	IEC0bits.IC1IE = 1;
+	IPC0bits.IC1IP  = 6;			//Input Capture used by Capteur Couleur	
+	IPC0bits.T1IP   = 5;			//Timer 1 used by Ethernet (Default value = 2)
+	IPC1bits.T2IP   = 2;			//Timer 2 Asser 
+//	IPC2bits.T3IP   = 7;			//Interrupt unused
+	IPC2bits.U1RXIP = 4;			//UART RX Interrupt
+	IPC3bits.U1TXIP = 4;			//UART TX Interrupt
+	IPC6bits.T4IP   = 6;			//Timer 4 Used by Turbine & Canon
+	IPC7bits.T5IP   = 5;			//Timer 5 Used by Canon
+	IPC14bits.QEI1IP = 7;			//Quad Encoder Interrupt
+	IPC18bits.QEI2IP = 7;			//Quad Encoder Interrupt
 }
 
-void InitPWM(void)
-{
-	P1TCONbits.PTEN = 1; 		// PWM Time base is On
-	P1TPER = 2000 - 1; 			// 20kHz PWM (2000 counts @40MIPS)
-	PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
-	PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
-
-	P1DC1 = 0xFFFF;	// 0x0000 = 100.00% Power
-	P1DC2 = 0xFFFF;	// 0xFFFF =   0.00% Power
-}
-
-void InitQEI(void)
-{
-	QEI1CONbits.QEIM  = 0b111;
-	QEI2CONbits.QEIM  = 0b111;
-	QEI1CONbits.SWPAB = 1;
-	QEI2CONbits.SWPAB = 0;
-	POS1CNT = 0x0000;
-	POS2CNT = 0x0000;
-	//DFLT1CONbits.QECK = 0b111;
-	//DFLT2CONbits.QECK = 0b111;
-	IFS3bits.QEI1IF = 0;
-	IFS4bits.QEI2IF = 0;
-	IEC3bits.QEI1IE = 1;
-	IEC4bits.QEI2IE = 1;
-}
-
-void InitPorts() 
+void InitPorts(void) 
 {
 	// Pinout date : 08_04_13
 	// Ports A
@@ -84,14 +42,14 @@ void InitPorts()
 	// 4 | I | RA4  : ETH_RST
 	// 5 
 	// 6 
-	// 7 | ? | RA7  : capteur couleur
+	// 7 | O | RA7  : capteur couleur
 	// 8 | I | RA8  : Jack
 	// 9 | O | RA9  : ETH_CS
-	// A | ? | RA10 : capteur couleur
+	// A | O | RA10 : capteur couleur
 	
 	// Ports B
-	// 0 | ? | RP0  | RB0  : capteur couleur
-	// 1 | ? | RP1  | RB1  : capteur couleur
+	// 0 | I | RP0  | RB0  : capteur couleur
+	// 1 | O | RP1  | RB1  : capteur couleur
 	// 2 | O | RP2  | RB2  : DIR_CDS
 	// 3 | I | RP3  | RB3  : codeur_Droit_A
 	// 4 | I | RP4  | RB4  : Interrupteur_Couleur
@@ -129,8 +87,7 @@ void InitPorts()
 	//          FEDCBA9876543210
 	
 	AD1PCFGL=0xFFFF;	//Tous les ports Analogiques configurés en numérique
-	
-	
+		
 	RPINR16bits.QEA2R = 17;			// CHAd 		<==> RP17  //2013
 	RPINR16bits.QEB2R = 18;			// CHBd			<==> RP18  //2013
 
@@ -141,11 +98,6 @@ void InitPorts()
 	RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5  //23/01/2013
 	RPOR9bits.RP19R   = 0b00111;   	// SDO1 <==> RP19 RC3  //23/01/2013
 	
-	//Configuration des ports pour la liaison UART2 des CDS
-//	RPINR19bits.U2RXR	= 24;	// Rx	<==> RP24-RC8
-//	TRISCbits.TRISC9 	= 1;
-//	RPOR12bits.RP25R	= 0b00101;	// Tx	<==> RP25-RC9
-//	
 	RPOR12bits.RP25R = 0b00011;     //TX RP24
     RPINR18 = 0b11000;              //RX RP25
     TRISCbits.TRISC8 = 0;
@@ -158,22 +110,122 @@ void InitPorts()
 	LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
 }
 
-void InitT2(void)
+void Init_Input_Capture(void)
+{
+	//Set Timer3 to Capture
+	T3CONbits.TON 	= 0;	//Stops the timer
+	T3CONbits.TSIDL = 0;
+	T3CONbits.TGATE = 0;
+	T3CONbits.TCS	= 0;
+	T3CONbits.TCKPS = 0b10; //Prescaler set to 1:1
+
+//	IPC2bits.T3IP = 7; 		//Set Timer2 Interrupt Priority Level
+//	IFS0bits.T3IF = 0; 		//Clear Timer2 Interrupt Flag
+	IEC0bits.T3IE = 0; 		//Enable Timer2 interrupt	
+	
+	T3CONbits.TON = 1;
+
+	//Configurer le pin Out en RP
+	RPINR7bits.IC1R 	= 1;	//RP1
+
+	IC1CONbits.ICM		= 0;
+	IC1CONbits.ICSIDL 	= 1;
+	IC1CONbits.ICTMR	= 0;		//TM3
+	IC1CONbits.ICI		= 0b00;
+	IC1CONbits.ICM		= 0b101;		
+		
+//	IPC0bits.IC1IP = 7;
+	IFS0bits.IC1IF = 0;
+	IEC0bits.IC1IE = 1;
+}
+void Init_Timer(void)
+{
+	Init_Timer2();
+	Init_Timer4();
+	Init_Timer5();
+}
+void Init_Timer2(void)
 {
 	T2CONbits.TON 	= 0;	//Stops the timer
 	T2CONbits.TSIDL = 0;
 	T2CONbits.TGATE = 0;
 	T2CONbits.TCS	= 0;
 	T2CONbits.T32	= 0;
-	T2CONbits.TCKPS = 0b01; //Prescaler set to 1:1
+	T2CONbits.TCKPS = 0b01; //Prescaler set to 1:8
 	
 	TMR2 = 0; 				//Clear timer register
 	PR2  = 5000;			//Load the period value (5000 = 0.5ms)
 
-	IPC1bits.T2IP = 4; 		//Set Timer2 Interrupt Priority Level
+//	IPC1bits.T2IP = 4; 		//Set Timer2 Interrupt Priority Level
 	IFS0bits.T2IF = 0; 		//Clear Timer2 Interrupt Flag
 	IEC0bits.T2IE = 1; 		//Enable Timer2 interrupt
 	T2CONbits.TON = 1;		// Timer enabled
+}
+
+void Init_Timer4(void)
+{
+	//--Timer4
+	T4CONbits.TON 	= 0;	//Stops the timer
+	T4CONbits.TSIDL = 0;
+	T4CONbits.TGATE = 0;
+	T4CONbits.TCS	= 0;
+	T4CONbits.TCKPS = 0b10; //Prescaler set to 1:64
+	
+	TMR4 = 0; 				//Clear timer register
+	PR4  = 1; 				//Load the period value 
+
+//	IPC6bits.T4IP = 6; 		//Set Timer1 Interrupt Priority Level
+	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt Flag
+	IEC1bits.T4IE = 1; 		//Enable Timer1 interrupt
+	
+	T4CONbits.TON = 1;		//Starts the timer
+}
+
+void Init_Timer5(void)
+{
+	//--Timer5
+	T5CONbits.TON 	= 0;	//Stops the timer
+	T5CONbits.TSIDL = 0;
+	T5CONbits.TGATE = 0;
+	T5CONbits.TCS	= 0;
+	T5CONbits.TCKPS = 0b01; //Prescaler set to 1:8
+	
+	TMR5 = 0; 				//Clear timer register
+	PR5  = INIT_CANON; 	    //Load the period value 
+
+//	IPC7bits.T5IP = 7; 		//Set Timer5 Interrupt Priority Level
+	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
+	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
+
+	SIGNAL_CANON   = 0;
+	SIGNAL_TURBINE = 0;
+}
+
+void InitPWM(void)
+{
+	P1TCONbits.PTEN = 1; 		// PWM Time base is On
+	P1TPER = 2000 - 1; 			// 20kHz PWM (2000 counts @40MIPS)
+	PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
+	PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
+
+	P1DC1 = 0xFFFF;				// 0x0000 = 100.00% Power
+	P1DC2 = 0xFFFF;				// 0xFFFF =   0.00% Power
+}
+
+void InitQEI(void)
+{
+	QEI1CONbits.QEIM  = 0b111;
+	QEI2CONbits.QEIM  = 0b111;
+	QEI1CONbits.SWPAB = 1;
+	QEI2CONbits.SWPAB = 0;
+	POS1CNT = 0x0000;
+	POS2CNT = 0x0000;
+	//DFLT1CONbits.QECK = 0b111;
+	//DFLT2CONbits.QECK = 0b111;
+	IFS3bits.QEI1IF = 0;
+	IFS4bits.QEI2IF = 0;
+	IEC3bits.QEI1IE = 1;
+	IEC4bits.QEI2IE = 1;
 }
 
 void InitADC(void)

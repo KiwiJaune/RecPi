@@ -50,7 +50,8 @@ unsigned int Cpt_Tmr4 = 0;
 unsigned int Valeur_Capteur_Couleur = 24;
 unsigned int Old_IC1Buf = 0;
 
-void delay(void) {
+void delay(void)
+{
     long i = 10; 
     while(i--);
 }
@@ -73,11 +74,16 @@ void Init_Turbine(void)
 	delays();
 }
 
-void Init_Servos(void){
+void Init_Servos(void)
+{
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
 	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
 }
 
+void Init_Pompe(void)
+{
+	POMPE = POMPE_DESACTIVE;
+}
 //Fonction Control Shutter 
 //Arguments : 
 //0 Shutter ne bloque pas
@@ -88,6 +94,14 @@ void Shutter_Pos(unsigned char Pos)
 		SHUTTER = SHUTTER_BLOQUE;
 	else
 		SHUTTER = SHUTTER_PAS_BLOQUE;
+}
+
+void Commande_Pompe(unsigned char Etat_Pompe)
+{
+	if(Etat_Pompe)
+		POMPE = POMPE_ACTIVE;
+	else
+		POMPE = POMPE_DESACTIVE;
 }
 
 Trame Couleur_Equipe(void)
@@ -146,44 +160,6 @@ void Canon_Vitesse(unsigned int vitesse)
 	Periode_Canon = vitesse;
 }
 
-//Initialisation TIMER 3,4 et 5 pour Turbine et Canon
-//Timer5 = Aspi, Timer3 = Canon
-void Init_Timer (void)
-{
-	//--Timer4
-	T4CONbits.TON 	= 0;	//Stops the timer
-	T4CONbits.TSIDL = 0;
-	T4CONbits.TGATE = 0;
-	T4CONbits.TCS	= 0;
-	T4CONbits.TCKPS = 0b10; //Prescaler set to 1:1
-	
-	TMR4 = 0; 				//Clear timer register
-	PR4  = 1; 			//Load the period value (2342 = 15ms)
-
-	IPC6bits.T4IP = 6; 		//Set Timer1 Interrupt Priority Level
-	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt Flag
-	IEC1bits.T4IE = 1; 		//Enable Timer1 interrupt
-	
-	T4CONbits.TON = 1;		//Starts the timer
-
-	//--Timer5
-	T5CONbits.TON 	= 0;	//Stops the timer
-	T5CONbits.TSIDL = 0;
-	T5CONbits.TGATE = 0;
-	T5CONbits.TCS	= 0;
-	T5CONbits.TCKPS = 0b01; //Prescaler set to 1:1
-	
-	TMR5 = 0; 				//Clear timer register
-	PR5  = INIT_CANON; 	    //Load the period value (78 = 0.5ms)
-
-	IPC7bits.T5IP = 7; 		//Set Timer5 Interrupt Priority Level
-	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
-	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
-
-	SIGNAL_CANON   = 0;
-	SIGNAL_TURBINE = 0;
-}
-
 void __attribute__((__interrupt__,__auto_psv__)) _T4Interrupt(void){
    	
 	Cpt_Tmr4++;			
@@ -193,7 +169,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T4Interrupt(void){
 		SIGNAL_TURBINE = FALLING_EDGE;		
 	}
 
-	if(Cpt_Tmr4 == 6250){
+	if(Cpt_Tmr4 == 6250){ 
 	
 		SIGNAL_TURBINE = RISING_EDGE;
 		SIGNAL_CANON   = ~PORTCbits.RC6;
@@ -299,7 +275,6 @@ Trame PilotePIDRessource()
 }
 Trame Presence_Balle(void)
 {
-
 	Trame Etat_Presence_Balle;
 	static BYTE Presence[3];
 	Etat_Presence_Balle.nbChar = 3;
@@ -311,7 +286,6 @@ Trame Presence_Balle(void)
 	Etat_Presence_Balle.message = Presence;
 	
 	return Etat_Presence_Balle;
-
 }
 
 unsigned int Send_Variable_Capteur_Couleur(void){
@@ -740,11 +714,17 @@ Trame AnalyseTrame(Trame t)
 			retour = t;
 			break;
 
-		case CMD_ALIMENTATION:
+		case CMD_COUPURE_ALIMENTATION:
 			// Commande alimentation
 			param1 = t.message[2];							// On ou Off
 			PiloteAlimentation(param1);
 			break;
+
+		case CMD_COUPURE_ALIMENTATION_CAMERA:
+			// Commande alimentation
+			param1 = t.message[2];							// On ou Off
+			PiloteAlimentationCamera(param1);
+		break;
 			
 		case CMD_DEMANDE_COULEUR_EQUIPE:
 			// Interrupteur couleur Equipe
@@ -775,49 +755,6 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDEPOSITION: // Demande POS X Y TETA
 			retour = PilotePositionXYT();
 		break;
-
-		// Debug asserv : Nouvelles commandes à attribuer
-		/*
-		case 0x37: // INIT
-			PilotPIDInit();
-		break;
-
-
-		case 0x39: // PID RESSOURCE
-			retour = PilotePIDRessource();
-		break;
-			
-		case 0x41: // CMD_GET_POSITION
-			param1 = t.message[2];
-			retour = PiloteGetPosition(param1);
-		break;
-
-		case 0x42: // CMD_GET_RAW_POSITION
-			retour = PiloteGetRawPosition();
-		break;
-
-		case 0x43: // CMD_GET_LONG_POSITION
-			retour = PiloteGetLongPosition();
-		break;
-
-		case 0x44: // CMD_GET_BUFF_POSITION
-			retour = PiloteGetBuffPosition();
-		break;
-
-		case 0x47:
-			param1 = t.message[2]*256+t.message[3];
-			PilotePIDBridage(param1);
-		break;
-
-		case 0x48:
-			retour = PilotePIDErreurs();
-		break;
-
-		case 0x49: 
-			param1 = t.message[2]*256+t.message[3];
-			feedforward = (double)param1;
-		break;
-		*/
 
 		case 0x90: //CMD_COUPURE:
 			Coupure();
@@ -863,7 +800,9 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDE_COULEUR:
 			return Couleur_Balle();
 		break;
-
+		case CMD_POMPE_A_VIDE:
+			Commande_Pompe(t.message[2]);
+		break;
 		case 0xF2:
 			Reset();
 			break;
