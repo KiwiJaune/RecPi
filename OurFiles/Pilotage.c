@@ -90,6 +90,51 @@ void Shutter_Pos(unsigned char Pos)
 		SHUTTER = SHUTTER_PAS_BLOQUE;
 }
 
+Trame Couleur_Equipe(void)
+{
+	Trame Etat_Couleur_Equipe;
+	static BYTE Couleur[3];
+	Etat_Couleur_Equipe.nbChar = 3;
+
+	Couleur[0] = 0xC1;
+	Couleur[1] = CMD_REPONSE_COULEUR_EQUIPE;
+	Couleur[2] = PORTBbits.RB4;
+
+	Etat_Couleur_Equipe.message = Couleur;
+	
+	return Etat_Couleur_Equipe;
+}
+
+Trame Presence_Assiette(void)
+{
+	Trame Etat_Presence_Assiette;
+	static BYTE Presence[3];
+	Etat_Presence_Assiette.nbChar = 3;
+
+	Presence[0] = 0xC1;
+	Presence[1] = CMD_REPONSE_PRESENCE_ASSIETTE;
+	Presence[2] = !PORTBbits.RB6;
+
+	Etat_Presence_Assiette.message = Presence;
+	
+	return Etat_Presence_Assiette;
+}
+
+Trame Presence_Aspirateur (void)
+{
+	Trame Etat_Presence_Aspirateur;
+	static BYTE Presence[3];
+	Etat_Presence_Aspirateur.nbChar = 3;
+
+	Presence[0] = 0xC1;
+	Presence[1] = CMD_REPONSE_PRESENCE_ASPIRATEUR;
+	Presence[2] = !PORTBbits.RB9;
+
+	Etat_Presence_Aspirateur.message = Presence;
+	
+	return Etat_Presence_Aspirateur;
+}
+
 
 void Aspirateur_Vitesse(unsigned int vitesse)
 {
@@ -700,7 +745,22 @@ Trame AnalyseTrame(Trame t)
 			param1 = t.message[2];							// On ou Off
 			PiloteAlimentation(param1);
 			break;
+			
+		case CMD_DEMANDE_COULEUR_EQUIPE:
+			// Interrupteur couleur Equipe
+			retour = Couleur_Equipe();
+			break;
+			
+		case CMD_DEMANDE_PRESENCE_ASSIETTE:
+			// Switchs en série présence Assiette
+			retour = Presence_Assiette();
+			break;
 
+		case CMD_DEMANDE_PRESENCE_ASPIRATEUR:
+			// Interrupteur couleur Equipe
+			retour = Presence_Aspirateur();
+			break;
+			
 		// Commandes spéciales Pwet Debug
 
 		case CMD_OFFSETASSERV:

@@ -85,9 +85,24 @@ int main(void)
 {
 	unsigned char demo=0;
 	unsigned char hold_blocage;
-
+	unsigned char jackAvant = 1, etatCouleur = 2;
 	static DWORD dwLastIP = 0;
-	
+
+	Trame Jack;
+	static BYTE Presence[2];
+	Jack.nbChar = 2;
+	Presence[0] = 0xC1;
+	Presence[1] = CMD_REPONSE_PRESENCE_JACK;
+	Jack.message = Presence;
+
+	Trame Couleur_Equipe;
+	static BYTE Couleur[3];
+	Couleur_Equipe.nbChar = 3;
+	Couleur[0] = 0xC1;
+	Couleur[1] = CMD_REPONSE_COULEUR_EQUIPE;
+	Couleur[2] = PORTBbits.RB4;
+	Couleur_Equipe.message = Couleur;
+
 	Trame envoiFin;
 	static BYTE mess[2];
 	mess[0] = 0xC1;
@@ -127,8 +142,6 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
-	
-	PORTAbits.RA7 = 1;
 
     Init_Timer();	
     
@@ -169,11 +182,22 @@ int main(void)
 	Init_Turbine(); //Initialisé après Init_Timer
 	Init_Servos();
 	Init_Input_Capture();
-	
-	TRISAbits.TRISA10 = 0;
+
+
 
 	while(1)
   	{	
+	  	if(!PORTAbits.RA8 && jackAvant)
+	  	{
+		  	EnvoiUserUdp (Jack);
+		  	jackAvant = 0;
+		}
+		if(etatCouleur != PORTBbits.RB4)
+		{
+			Couleur[2] = PORTBbits.RB4;
+  			EnvoiUserUdp (Couleur_Equipe);
+  			etatCouleur = PORTBbits.RB4;
+  		}
 		if(flag_envoi) 
 		{	
 			scan=0;
