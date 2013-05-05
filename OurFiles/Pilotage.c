@@ -6,7 +6,8 @@
 #include "CDS5516.h"
 
 // ATTENTION /!\ Ces fonctions ne doivent pas être bloquantes
-
+extern unsigned int vitesse_canon;
+extern unsigned int consigne_canon;
 extern unsigned int ADC_Results[8];
 extern unsigned int position_buffer[6];
 extern unsigned char buff_position_ptr,last_send_ptr;
@@ -33,6 +34,7 @@ extern double pos_teta;
 extern double offset_teta;
 
 extern double erreur_allowed;
+extern unsigned char flag_capteur_vitesse;
 
 unsigned char scan;
 
@@ -237,6 +239,17 @@ void __attribute__((__interrupt__,__auto_psv__)) _IC1Interrupt(void)
 		Valeur_Capteur_Couleur = (PR3 - t1) + t2;
 }
 
+//Interruption Input Capture
+//Interruption induced on every Falling Edge
+void __attribute__((__interrupt__,__auto_psv__)) _IC2Interrupt(void)
+{
+	unsigned int t1,t2;
+	static unsigned int oldTMR4;
+	IEC0bits.IC2IE = 0;
+	IFS0bits.IC2IF = 0;
+	flag_capteur_vitesse = 1;
+}
+
 
 
 Trame PiloteGotoXY(int x,int y, unsigned char x_negatif, unsigned char y_negatif)
@@ -285,6 +298,21 @@ Trame PilotePositionXYT()
 	
 	trame.message = tableau;
 	
+	return trame;
+}
+
+Trame PiloteMesureCanon()
+{
+	Trame trame;
+	static BYTE tableau[4];
+	trame.nbChar = 4;
+	
+	tableau[0] = 0xC1;
+	tableau[1] = CMD_REPONSE_MESURE_CANON;
+	tableau[2] = vitesse_canon>>8;
+	tableau[3] = vitesse_canon&0x00FF;
+
+	trame.message = tableau;	
 	return trame;
 }
 
@@ -839,6 +867,14 @@ Trame AnalyseTrame(Trame t)
 			Commande_Pompe(t.message[2]);
 		break;
 
+		case CMD_DEMANDE_MESURE_CANON:	
+			retour = PiloteMesureCanon();
+		break;
+		
+		case CMD_CONSIGNE_CANON:
+			consigne_canon= t.message[2] * 256 + t.message[3];
+		break;
+		
 		case 0xF2:
 			Reset();
 		break;

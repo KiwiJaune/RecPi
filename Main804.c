@@ -73,6 +73,13 @@ unsigned char etat_Capteur_Couleur = 0;
 unsigned int Tab_Cpt_PWM[TAILLE_TAB_CPT];
 unsigned int Cpt_Timer4 = 0;
 
+//Variable Capteur de vitesse
+unsigned char flag_capteur_vitesse;
+unsigned char tab_capteur_vitesse[8];
+unsigned int vitesse_canon;
+unsigned int consigne_canon;
+
+
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
     Nop();
@@ -430,10 +437,37 @@ void SaveAppConfig(void)
 
 void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void) 
 {
+	static unsigned char cpt_capteur_vitesse,desactive_interrupt;
+	unsigned int temp;
+	unsigned char i,k;
+	
 	flag = 0;
 	courrier = 1;
 	motor_flag = Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
 	
+	if(--desactive_interrupt==0)
+	{
+		IFS0bits.IC2IF = 0;
+		IEC0bits.IC2IE = 1;
+	}	
+	if(flag_capteur_vitesse)
+	{
+		desactive_interrupt=3;
+		flag_capteur_vitesse=0;	
+		tab_capteur_vitesse[k++]=cpt_capteur_vitesse;
+		temp=0;
+		for(i=0;i<7;i++)
+			temp+= (unsigned int)tab_capteur_vitesse[i];
+		temp=temp>>8;
+		vitesse_canon = (unsigned int)(1000/temp); // résultat en tour/min
+		if(k>7) 
+			k=0;
+		cpt_capteur_vitesse=0;
+		
+	}
+	if(cpt_capteur_vitesse<250) 
+		cpt_capteur_vitesse++;
+
 	Cpt_Timer4++;
 
 	if(Cpt_Timer4 == CPT_TIMER4_ASSER)

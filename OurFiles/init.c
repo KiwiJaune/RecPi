@@ -137,6 +137,21 @@ void Init_Input_Capture(void)
 //	IPC0bits.IC1IP = 7;
 	IFS0bits.IC1IF = 0;
 	IEC0bits.IC1IE = 1;
+	
+	// pour capteur vitesse
+	//Configurer la pin d'entree
+	//RPINR7bits.IC2R 	= 1;	//RP?
+
+	IC2CONbits.ICM		= 0;
+	IC2CONbits.ICSIDL 	= 1;
+	IC2CONbits.ICTMR	= 0;		//TM3
+	IC2CONbits.ICI		= 0b00;
+	IC2CONbits.ICM		= 0b010;		
+		
+//	IPC0bits.IC2IP = 7;
+	IFS0bits.IC2IF = 0;
+	IEC0bits.IC2IE = 1;
+
 }
 void Init_Timer(void)
 {
