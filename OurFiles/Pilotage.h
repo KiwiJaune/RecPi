@@ -38,6 +38,7 @@ Trame PiloteSwitchTour();
 Trame PiloteMesureBalise();
 void PiloteLevagePosition(char avantOuArriere, int position);
 Trame PiloteCapteurs(char cote);
+Trame PiloteMesureCanon();
 
 int Coupure(void);
 
@@ -151,6 +152,7 @@ Trame AnalyseTrame(Trame t);
 #define CMD_VITESSE_CANON           	0x54
 #define CMD_SHUTTER                 	0x55
 #define CMD_POMPE_A_VIDE				0x56
+#define CMD_CONSIGNE_CANON				0x57
 
 // Servomoteurs
 #define CMD_SERVO_POSITION          	0x60
@@ -168,6 +170,8 @@ Trame AnalyseTrame(Trame t);
 #define CMD_REPONSE_PRESENCE_ASSIETTE	0x7B
 #define CMD_DEMANDE_PRESENCE_ASPIRATEUR	0x7C
 #define CMD_REPONSE_PRESENCE_ASPIRATEUR	0x7D
+#define CMD_DEMANDE_MESURE_CANON		0x7E
+#define CMD_REPONSE_MESURE_CANON		0x7F
 
 // Alimentation
 #define CMD_ALIMENTATION		0x80

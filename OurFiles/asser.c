@@ -2,7 +2,6 @@
 #include "asser.h"
 #include <math.h>
 
-
 double kp[N],ki[N],kd[N];
 int revolutions[N];
 unsigned char kd_cancel;
