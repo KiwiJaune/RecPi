@@ -42,15 +42,19 @@ unsigned char scan;
 extern unsigned int Tab_Capteur_Couleur[8];
 
 //Variable Extern pour turbine
-unsigned int Periode_Turbine = INIT_TURBINE;
-unsigned int Periode_Canon = INIT_CANON;
+unsigned int Periode_Turbine  = INIT_TURBINE;
+unsigned int Periode_Canon    = INIT_CANON;
+
+//Variable Servo Assiette
+unsigned int Periode_Assiette = INIT_ASSIETTE;
 
 //Variable Capteur Couleur
 unsigned int Valeur_Capteur_Couleur = 24;
 unsigned int Old_IC1Buf = 0;
 
-//Variable Servo Assiette
-unsigned int Periode_Assiette = INIT_PERIODE_ASSIETTE;
+unsigned int Cpt_Tmr_Periode = 0;
+unsigned int Cpt_Tmr_Pwm_Turbine = 0;
+unsigned int Cpt_Tmr_Pwm_Assiette = 0;
 
 void delay(void)
 {
@@ -74,8 +78,8 @@ void delays(void)
 //Canon : Desactive
 void Init_Turbine(void)
 {		
-	Periode_Turbine = INIT_TURBINE;	
- 	Periode_Canon   = INIT_CANON;
+	Aspirateur_Vitesse(INIT_TURBINE);	
+ 	Canon_Vitesse(INIT_CANON);
 	delays();
 	delays();
 }
@@ -87,9 +91,14 @@ void Init_Servos(void)
 {
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
 	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
-	Assiette_Position(INIT_PERIODE_ASSIETTE);
+	Assiette_Position(INIT_ASSIETTE);
 }
 
+//Initalisation Alimentation
+void Init_Alimentation(void)
+{
+	LATAbits.LATA3 = 1;
+}
 //Initialisation de la pompe en mode desactive
 void Init_Pompe(void)
 {
@@ -187,19 +196,24 @@ void Assiette_Position(unsigned int vitesse)
 	Periode_Assiette = vitesse;
 }
 
-//Function generates PWM through Timer 2 ISR, induced every 0.25ms
-void Pwm_Generateur(unsigned int Cpt_Tmr_Pwm[], unsigned char Taille_Tab)
+//Function generates PWM through Timer 2 ISR, induced every 1ms
+void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 {
-	if(Cpt_Tmr_Pwm[1] == Periode_Turbine)
+	Cpt_Tmr_Periode++;			
+	Cpt_Tmr_Pwm_Turbine++;
+	Cpt_Tmr_Pwm_Assiette++;
+	
+	if(Cpt_Tmr_Pwm_Turbine == Periode_Turbine)
 	{
 		SIGNAL_TURBINE = FALLING_EDGE;		
 	}
-	if(Cpt_Tmr_Pwm[2] == Periode_Assiette)
+		
+	if(Cpt_Tmr_Pwm_Assiette == Periode_Assiette)
 	{
-		SIGNAL_ASSIETTE = FALLING_EDGE;
+		SIGNAL_ASSIETTE = FALLING_EDGE;		
 	}
-	if(Cpt_Tmr_Pwm[0] == CPT_PERIODE_20MS)
-	{ 
+	if(Cpt_Tmr_Periode == CPT_PERIODE_20MS)
+	{
 		SIGNAL_ASSIETTE = RISING_EDGE;
 		SIGNAL_TURBINE  = RISING_EDGE;
 		SIGNAL_CANON    = ~PORTCbits.RC6;
@@ -208,19 +222,20 @@ void Pwm_Generateur(unsigned int Cpt_Tmr_Pwm[], unsigned char Taille_Tab)
 		PR5  = Periode_Canon; 			
 		T5CONbits.TON = 1;
 
-		Cpt_Tmr_Pwm[0] = 0;
-		Cpt_Tmr_Pwm[1] = 0;
-		Cpt_Tmr_Pwm[2] = 0;
+		Cpt_Tmr_Periode = 0;
+		Cpt_Tmr_Pwm_Turbine = 0;
+		Cpt_Tmr_Pwm_Assiette = 0;
 	}
+	IFS0bits.T2IF = 0; 		//Clear Timer1 Interrupt flag
 }
 
-//Interrupt induced every ~ms +-2ms
+//Interrupt induced every ~160us
 void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
-
+	
 	T5CONbits.TON = 0;
 	IFS1bits.T5IF = 0; 		//Clear Timer1 Interrupt flag
 
-	SIGNAL_CANON   = ~PORTCbits.RC6;	
+	SIGNAL_CANON = ~PORTCbits.RC6;
 }
 
 //Interruption Input Capture
@@ -243,8 +258,6 @@ void __attribute__((__interrupt__,__auto_psv__)) _IC1Interrupt(void)
 //Interruption induced on every Falling Edge
 void __attribute__((__interrupt__,__auto_psv__)) _IC2Interrupt(void)
 {
-	unsigned int t1,t2;
-	static unsigned int oldTMR4;
 	IEC0bits.IC2IE = 0;
 	IFS0bits.IC2IF = 0;
 	flag_capteur_vitesse = 1;
@@ -817,7 +830,7 @@ Trame AnalyseTrame(Trame t)
 		break;
 
 		case CMD_VITESSE_ASPIRATEUR:
-			param1 = (t.message[2]*256+t.message[3]+4);			
+			param1 = ((t.message[3]*256+t.message[4])+312);			
 			Aspirateur_Vitesse(param1);
 		break;
 
@@ -836,7 +849,7 @@ Trame AnalyseTrame(Trame t)
 		case CMD_SERVO_POSITION:
 			if(t.message[2] == ID_SERVO_ASSIETTE)
 			{
-				Assiette_Position(t.message[3]*256+t.message[4]+4);
+				Assiette_Position((t.message[3]*256+t.message[4])+312);
 			}
 			else 
 			{
