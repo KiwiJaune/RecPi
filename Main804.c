@@ -13,17 +13,6 @@
 #include "OurFiles/CDS5516.h"
 #include "OurFiles/FonctionsUc.h"
 
-// Configuration Clock Par Mouly
-_FOSCSEL(FNOSC_FRC)
-_FOSC(FCKSM_CSECMD & OSCIOFNC_ON)
-_FPOR(FPWRT_PWR1)
-_FWDT(FWDTEN_OFF)// & SWDTEN_OFF)
-_FICD(ICS_PGD3 & JTAGEN_OFF)
-
-//Define Capteur Couleur
-#define LED LATAbits.LATA7
-#define S2 LATBbits.LATB0 
-#define S3 LATAbits.LATA10 
 
 // TODO list
 // * Self-calibration de l'odométrie
@@ -39,18 +28,28 @@ _FICD(ICS_PGD3 & JTAGEN_OFF)
 //	 - On detecte le blocage, on arrete le moteur (ABRUPT) et on envoi au PC le reste de la distance à parcourir
 //	 - On detecte le blocage, on revient à la position précédente mieux encore avec le magnetoscope
 
+// Configuration Clock Par Mouly
+_FOSCSEL(FNOSC_FRC)
+_FOSC(FCKSM_CSECMD & OSCIOFNC_ON)
+_FPOR(FPWRT_PWR1)
+_FWDT(FWDTEN_OFF)// & SWDTEN_OFF)
+_FICD(ICS_PGD3 & JTAGEN_OFF)
 
+//Define Capteur Couleur
+#define LED LATAbits.LATA7
+#define S2 LATBbits.LATB0 
+#define S3 LATAbits.LATA10 
+
+//Define Compteur PWM
+#define CPT_TIMER4_PERIODE_20MS 0 
+#define CPT_TIMER4_TURBINE_DUTYCYCLE 1
+#define CPT_TIMER4_SERVO_DUTYCYCLE 2
+#define CPT_TIMER4_ASSER 4
+
+#define TAILLE_TAB_CPT 3
 
 APP_CONFIG AppConfig;
 
-// Use UART2 instead of UART1 for stdout (printf functions).  Explorer 16 
-// serial port hardware is on PIC UART2 module.
-//#if defined(EXPLORER_16)//TODO
-// int __C30_UART = 2;
-//#endif
-
-// Private helper functions.
-// These may or may not be present in all applications.
 static void InitAppConfig(void);
 
 extern unsigned int ADC_Results[8];
@@ -70,6 +69,10 @@ unsigned int Cpt_Tmr2_Capteur_Couleur = 0;
 unsigned int Tab_Capteur_Couleur[8] = {0};
 unsigned char etat_Capteur_Couleur = 0;
 
+//Variable Pwm_Servos_Timer2
+unsigned int Tab_Cpt_PWM[TAILLE_TAB_CPT];
+unsigned int Cpt_Timer4 = 0;
+
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
     Nop();
@@ -86,7 +89,7 @@ int main(void)
 	unsigned char hold_blocage;
 	unsigned char jackAvant = 1, etatCouleur = 2;
 	static DWORD dwLastIP = 0;
-
+	
 	Trame Jack;
 	static BYTE Presence[2];
 	Jack.nbChar = 2;
@@ -141,7 +144,7 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
-
+	delays();
     Init_Timer();	// Initialisation Timer2,Timer4 & Timer5
     
 	InitQEI(); 		// Initialisation des entrées en quadrature
@@ -170,16 +173,16 @@ int main(void)
 
 	hold_blocage=0;
 	
-	InitUART2();	// Initialisation de la liaison série 2 (UART2)
-	Init_Turbine(); // Initialisé après Init_Timer
+	InitUART2();	
+	Init_Turbine(); 
 	Init_Servos();
 	Init_Pompe();
 	Init_Input_Capture();
-	Init_Interrupt_Priority();
 
-
+	LATAbits.LATA3 = 1; // Init Alim
 	while(1)
-  	{	
+  	{		
+
 	  	if(!PORTAbits.RA8 && jackAvant)
 	  	{
 		  	EnvoiUserUdp (Jack);
@@ -425,99 +428,113 @@ void SaveAppConfig(void)
 #endif
 
 
-void __attribute__ ((interrupt, no_auto_psv)) _T2Interrupt(void) 
+void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void) 
 {
 	flag = 0;
 	courrier = 1;
 	motor_flag = Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
-	if(motor_flag == 0x10)
-	{
-		motor_flag=0;
-		flag_envoi=1;
-	}
-	if(motor_flag == 0x20)
-	{
-		motor_flag=0;
-		flag_distance=1;
-	}
-	if(motor_flag == 0x30)
-	{
-		motor_flag=0;
-		flag_calage=1;
-	}
-	if(motor_flag == 0x40)
-	{
-		motor_flag=0;
-		flag_blocage=1;
-	}
 	
-	/*if(datalogger_blocker==0)
+	Cpt_Timer4++;
+
+	if(Cpt_Timer4 == CPT_TIMER4_ASSER)
 	{
-		if(++datalogger_counter>500) 
-			datalogger_counter = 0;
-		datalogger_ga[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_GAUCHE);
-		datalogger_dr[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_DROIT);
-	}*/
-	PID_ressource_used = TMR2;
+		Cpt_Timer4 = 0; 
 
-	Cpt_Tmr2_Capteur_Couleur++;
-
-	if(Cpt_Tmr2_Capteur_Couleur == 20)
-	{
-		Cpt_Tmr2_Capteur_Couleur = 0;
-
-		switch(++etat_Capteur_Couleur){
-
-			case 1:
-				Tab_Capteur_Couleur[0] = Send_Variable_Capteur_Couleur();
-				S3  = 0; 
-				S2  = 0;
-				LED = 0;
-			break;
-			case 2:
-				Tab_Capteur_Couleur[1] = Send_Variable_Capteur_Couleur();
-				S3  = 1; 
-				S2  = 0;
-				LED = 0;
-			break;
-			case 3:
-				Tab_Capteur_Couleur[2] = Send_Variable_Capteur_Couleur();
-				S3  = 0; 
-				S2  = 1;
-				LED = 0;
-			break;
-			case 4:
-				Tab_Capteur_Couleur[3] = Send_Variable_Capteur_Couleur();
-				S3  = 1; 
-				S2  = 1;
-				LED = 0;
-			break;
-			case 5:
-				Tab_Capteur_Couleur[4] = Send_Variable_Capteur_Couleur();
-				S3  = 0; 
-				S2  = 0;
-				LED = 1;
-			break;
-			case 6:
-				Tab_Capteur_Couleur[5] = Send_Variable_Capteur_Couleur();
-				S3  = 1; 
-				S2  = 0;
-				LED = 1;
-			break;
-			case 7:
-				Tab_Capteur_Couleur[6] = Send_Variable_Capteur_Couleur();
-				S3  = 0; 
-				S2  = 1;
-				LED = 1;
-			break;
-			case 8:
-				Tab_Capteur_Couleur[7] = Send_Variable_Capteur_Couleur();
-				S3  = 1; 
-				S2  = 1;
-				LED = 1;
-				etat_Capteur_Couleur = 0;
-			break;
+		if(motor_flag == 0x10)
+		{
+			motor_flag=0;
+			flag_envoi=1;
+		}
+		if(motor_flag == 0x20)
+		{
+			motor_flag=0;
+			flag_distance=1;
+		}
+		if(motor_flag == 0x30)
+		{
+			motor_flag=0;
+			flag_calage=1;
+		}
+		if(motor_flag == 0x40)
+		{
+			motor_flag=0;
+			flag_blocage=1;
+		}
+		
+		/*if(datalogger_blocker==0)
+		{
+			if(++datalogger_counter>500) 
+				datalogger_counter = 0;
+			datalogger_ga[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_GAUCHE);
+			datalogger_dr[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_DROIT);
+		}*/
+		PID_ressource_used = (TMR4); //Previous value TMR4
+	
+		Cpt_Tmr2_Capteur_Couleur++;
+	
+		if(Cpt_Tmr2_Capteur_Couleur == 20)
+		{
+			Cpt_Tmr2_Capteur_Couleur = 0;
+	
+			switch(++etat_Capteur_Couleur){
+	
+				case 1:
+					Tab_Capteur_Couleur[0] = Send_Variable_Capteur_Couleur();
+					S3  = 0; 
+					S2  = 0;
+					LED = 0;
+				break;
+				case 2:
+					Tab_Capteur_Couleur[1] = Send_Variable_Capteur_Couleur();
+					S3  = 1; 
+					S2  = 0;
+					LED = 0;
+				break;
+				case 3:
+					Tab_Capteur_Couleur[2] = Send_Variable_Capteur_Couleur();
+					S3  = 0; 
+					S2  = 1;
+					LED = 0;
+				break;
+				case 4:
+					Tab_Capteur_Couleur[3] = Send_Variable_Capteur_Couleur();
+					S3  = 1; 
+					S2  = 1;
+					LED = 0;
+				break;
+				case 5:
+					Tab_Capteur_Couleur[4] = Send_Variable_Capteur_Couleur();
+					S3  = 0; 
+					S2  = 0;
+					LED = 1;
+				break;
+				case 6:
+					Tab_Capteur_Couleur[5] = Send_Variable_Capteur_Couleur();
+					S3  = 1; 
+					S2  = 0;
+					LED = 1;
+				break;
+				case 7:
+					Tab_Capteur_Couleur[6] = Send_Variable_Capteur_Couleur();
+					S3  = 0; 
+					S2  = 1;
+					LED = 1;
+				break;
+				case 8:
+					Tab_Capteur_Couleur[7] = Send_Variable_Capteur_Couleur();
+					S3  = 1; 
+					S2  = 1;
+					LED = 1;
+					etat_Capteur_Couleur = 0;
+				break;
+			}
 		}
 	}
-	IFS0bits.T2IF = 0;
+	Tab_Cpt_PWM[CPT_TIMER4_PERIODE_20MS]++;
+	Tab_Cpt_PWM[CPT_TIMER4_TURBINE_DUTYCYCLE]++;
+	Tab_Cpt_PWM[CPT_TIMER4_SERVO_DUTYCYCLE]++;
+
+	Pwm_Generateur(Tab_Cpt_PWM,TAILLE_TAB_CPT);
+	
+	IFS1bits.T4IF = 0;
 }

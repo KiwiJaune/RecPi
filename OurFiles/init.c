@@ -17,15 +17,16 @@ void InitClk(void)
 	while(OSCCONbits.LOCK != 1);
 }
 
-void Init_Interrupt_Priority(void){
+void Init_Interrupt_Priority(void)
+{
 	
 	IPC0bits.IC1IP  = 6;			//Input Capture used by Capteur Couleur	
 	IPC0bits.T1IP   = 5;			//Timer 1 used by Ethernet (Default value = 2)
-	IPC1bits.T2IP   = 2;			//Timer 2 Asser 
-//	IPC2bits.T3IP   = 7;			//Interrupt unused
+//	IPC1bits.T2IP   = 2;			//Timer 2 Asser UNUSED
+//	IPC2bits.T3IP   = 7;			//Interrupt UNUSED
 	IPC2bits.U1RXIP = 4;			//UART RX Interrupt
 	IPC3bits.U1TXIP = 4;			//UART TX Interrupt
-	IPC6bits.T4IP   = 6;			//Timer 4 Used by Turbine & Canon
+	IPC6bits.T4IP   = 2;			//Timer 4 Used by Turbine & Canon
 	IPC7bits.T5IP   = 5;			//Timer 5 Used by Canon
 	IPC14bits.QEI1IP = 7;			//Quad Encoder Interrupt
 	IPC18bits.QEI2IP = 7;			//Quad Encoder Interrupt
@@ -56,7 +57,7 @@ void InitPorts(void)
 	// 5 | I | RP5  | RB5  : PROG_PGD & Capteur présence balle
 	// 6 | I | RP6  | RB6  : PROG_PGC & Switchs assiette
 	// 7 | I | RP7  | RB7  : ETH_INT
-	// 8 | O | RP8  | RB8  : I2C_SCL
+	// 8 | I | RP8  | RB8  : Compteur Tour Canon
 	// 9 | X | RP9  | RB9  : Présence_Aspirateur(I2C_SDA)
 	// A | O | RP10 | RB10 : Pompe à vide
 	// B | O | RP11 | RB11 : Servo assiette
@@ -81,7 +82,7 @@ void InitPorts(void)
 
 	TRISA 	= 0b1111100101110101;
 	//          FEDCBA9876543210
-	TRISB 	= 0b0000001011111010;
+	TRISB 	= 0b0000001111111010;
 	//          FEDCBA9876543210
 	TRISC 	= 0b1111111000100111; //Modif de C9 et C8 : Valeur par default C9 = 0;C8 = 1
 	//          FEDCBA9876543210
@@ -103,7 +104,6 @@ void InitPorts(void)
     TRISCbits.TRISC8 = 0;
     TRISCbits.TRISC9 = 1;
 
-
 	LATAbits.LATA3 = 0; 	// Alimentation OFF
 	
 	//Initialisation du sens de communication pour les AX12
@@ -117,13 +117,13 @@ void Init_Input_Capture(void)
 	T3CONbits.TSIDL = 0;
 	T3CONbits.TGATE = 0;
 	T3CONbits.TCS	= 0;
-	T3CONbits.TCKPS = 0b10; //Prescaler set to 1:1
+	T3CONbits.TCKPS = 0b10; //Prescaler set to 1:64
 
-//	IPC2bits.T3IP = 7; 		//Set Timer2 Interrupt Priority Level
-//	IFS0bits.T3IF = 0; 		//Clear Timer2 Interrupt Flag
-	IEC0bits.T3IE = 0; 		//Enable Timer2 interrupt	
+//	IPC2bits.T3IP = 7; 		//Set Timer3 Interrupt Priority Level
+//	IFS0bits.T3IF = 0; 		//Clear Timer3 Interrupt Flag
+	IEC0bits.T3IE = 0; 		//Disable Timer3 interrupt	
 	
-	T3CONbits.TON = 1;
+	T3CONbits.TON = 1;		//Starts the timer
 
 	//Configurer le pin Out en RP
 	RPINR7bits.IC1R 	= 1;	//RP1
@@ -140,7 +140,6 @@ void Init_Input_Capture(void)
 }
 void Init_Timer(void)
 {
-	Init_Timer2();
 	Init_Timer4();
 	Init_Timer5();
 }
@@ -159,7 +158,7 @@ void Init_Timer2(void)
 //	IPC1bits.T2IP = 4; 		//Set Timer2 Interrupt Priority Level
 	IFS0bits.T2IF = 0; 		//Clear Timer2 Interrupt Flag
 	IEC0bits.T2IE = 1; 		//Enable Timer2 interrupt
-	T2CONbits.TON = 1;		// Timer enabled
+	T2CONbits.TON = 1;		//Timer enabled
 }
 
 void Init_Timer4(void)
@@ -169,14 +168,14 @@ void Init_Timer4(void)
 	T4CONbits.TSIDL = 0;
 	T4CONbits.TGATE = 0;
 	T4CONbits.TCS	= 0;
-	T4CONbits.TCKPS = 0b10; //Prescaler set to 1:64
+	T4CONbits.TCKPS = 0b01; //Prescaler set to 1:8
 	
 	TMR4 = 0; 				//Clear timer register
-	PR4  = 1; 				//Load the period value 
+	PR4  = 1250; 			//Load the period value (Pas) 1/(40e6/8/1250) = 250us
 
-//	IPC6bits.T4IP = 6; 		//Set Timer1 Interrupt Priority Level
-	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt Flag
-	IEC1bits.T4IE = 1; 		//Enable Timer1 interrupt
+//	IPC6bits.T4IP = 6; 		//Set Timer4 Interrupt Priority Level
+	IFS1bits.T4IF = 0; 		//Clear Timer4 Interrupt Flag
+	IEC1bits.T4IE = 1; 		//Enable Timer4 interrupt
 	
 	T4CONbits.TON = 1;		//Starts the timer
 }
@@ -191,14 +190,15 @@ void Init_Timer5(void)
 	T5CONbits.TCKPS = 0b01; //Prescaler set to 1:8
 	
 	TMR5 = 0; 				//Clear timer register
-	PR5  = INIT_CANON; 	    //Load the period value 
+	PR5  = INIT_CANON; 	    //Load the period value (Pas) 1/(40e6/8/2500) = 1.6us
 
 //	IPC7bits.T5IP = 7; 		//Set Timer5 Interrupt Priority Level
 	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
 	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
 
-	SIGNAL_CANON   = 0;
-	SIGNAL_TURBINE = 0;
+	SIGNAL_CANON    = 0;
+	SIGNAL_TURBINE  = 0;
+	SIGNAL_ASSIETTE = 0;
 }
 
 void InitPWM(void)

@@ -39,16 +39,16 @@ unsigned char scan;
 //Extern Capteur Couleur
 extern unsigned int Tab_Capteur_Couleur[8];
 
-//2013
-unsigned int Periode_Turbine = INIT_TURBINE;	//Varibales TIMER
+//Variable Extern pour turbine
+unsigned int Periode_Turbine = INIT_TURBINE;
 unsigned int Periode_Canon = INIT_CANON;
 
-unsigned int Cpt_Tmr4_Turbine = 1;
-
-unsigned int Cpt_Tmr4 = 0;
-
+//Variable Capteur Couleur
 unsigned int Valeur_Capteur_Couleur = 24;
 unsigned int Old_IC1Buf = 0;
+
+//Variable Servo Assiette
+unsigned int Periode_Assiette = INIT_PERIODE_ASSIETTE;
 
 void delay(void)
 {
@@ -60,12 +60,16 @@ void delayms(void)
 	long i = 1600000; //400ms
     while(i--);
 }
+//Delay seconde
 void delays(void) 
 {
-	long i = 4000000; 
+	long i = 4000000; //seconde
     while(i--);
 }
 
+//Initialisation des servos moteurs selon les positions suivantes: 
+//Aspirateur/Turbine : Desactive
+//Canon : Desactive
 void Init_Turbine(void)
 {		
 	Periode_Turbine = INIT_TURBINE;	
@@ -73,21 +77,26 @@ void Init_Turbine(void)
 	delays();
 	delays();
 }
-
+//Initialisation des servos moteurs selon les positions suivantes: 
+//Bras_Aspirateur : Retracte
+//Bras_Debloqueur : Bas
+//Assiette : Position Haut (0.5ms)
 void Init_Servos(void)
 {
 	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
 	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
+	Assiette_Position(INIT_PERIODE_ASSIETTE);
 }
 
+//Initialisation de la pompe en mode desactive
 void Init_Pompe(void)
 {
 	POMPE = POMPE_DESACTIVE;
 }
-//Fonction Control Shutter 
-//Arguments : 
-//0 Shutter ne bloque pas
-//1 Shutter bloque
+
+//Fonction qui commande le shutter/Debloqueur 
+//Etat pompe : 0 Desactive
+//			   1 Active
 void Shutter_Pos(unsigned char Pos)
 {
 	if(Pos)
@@ -96,6 +105,9 @@ void Shutter_Pos(unsigned char Pos)
 		SHUTTER = SHUTTER_PAS_BLOQUE;
 }
 
+//Fonction qui commande la pompe à vide 
+//Etat pompe : 0 Desactive
+//			   1 Active
 void Commande_Pompe(unsigned char Etat_Pompe)
 {
 	if(Etat_Pompe)
@@ -104,6 +116,7 @@ void Commande_Pompe(unsigned char Etat_Pompe)
 		POMPE = POMPE_DESACTIVE;
 }
 
+//Fonction qui renvoie sous forme de trame(UDP) la couleur de l'equipe
 Trame Couleur_Equipe(void)
 {
 	Trame Etat_Couleur_Equipe;
@@ -119,6 +132,7 @@ Trame Couleur_Equipe(void)
 	return Etat_Couleur_Equipe;
 }
 
+//Fonction qui renvoie sous forme de trame(UDP) l'etat du switch Presence Assiette
 Trame Presence_Assiette(void)
 {
 	Trame Etat_Presence_Assiette;
@@ -134,6 +148,7 @@ Trame Presence_Assiette(void)
 	return Etat_Presence_Assiette;
 }
 
+//Fonction qui renvoie sous forme de trame(UDP) l'etat du switch Presence Aspirateur
 Trame Presence_Aspirateur (void)
 {
 	Trame Etat_Presence_Aspirateur;
@@ -149,41 +164,55 @@ Trame Presence_Aspirateur (void)
 	return Etat_Presence_Aspirateur;
 }
 
-
+//Fonction commande vitesse Aspirateur/Turbine
+//Value range 1(0.5ms) <--> 4(2.0ms)
 void Aspirateur_Vitesse(unsigned int vitesse)
 {
 	Periode_Turbine = vitesse;
 }
 
+//Fonction commande vitesse canon
+//Value range 5000(1ms) <--> 10000(2ms) 
 void Canon_Vitesse(unsigned int vitesse)
 {
 	Periode_Canon = vitesse;
 }
 
-void __attribute__((__interrupt__,__auto_psv__)) _T4Interrupt(void){
-   	
-	Cpt_Tmr4++;			
-	Cpt_Tmr4_Turbine++;
-	
-	if(Cpt_Tmr4_Turbine == Periode_Turbine){
+//Function controls the position of assiette servo
+//Value range 1(0.5ms) <--> 4(2.0ms)
+void Assiette_Position(unsigned int vitesse)
+{	
+	Periode_Assiette = vitesse;
+}
+
+//Function generates PWM through Timer 2 ISR, induced every 0.25ms
+void Pwm_Generateur(unsigned int Cpt_Tmr_Pwm[], unsigned char Taille_Tab)
+{
+	if(Cpt_Tmr_Pwm[1] == Periode_Turbine)
+	{
 		SIGNAL_TURBINE = FALLING_EDGE;		
 	}
-
-	if(Cpt_Tmr4 == 6250){ 
-	
-		SIGNAL_TURBINE = RISING_EDGE;
-		SIGNAL_CANON   = ~PORTCbits.RC6;
+	if(Cpt_Tmr_Pwm[2] == Periode_Assiette)
+	{
+		SIGNAL_ASSIETTE = FALLING_EDGE;
+	}
+	if(Cpt_Tmr_Pwm[0] == CPT_PERIODE_20MS)
+	{ 
+		SIGNAL_ASSIETTE = RISING_EDGE;
+		SIGNAL_TURBINE  = RISING_EDGE;
+		SIGNAL_CANON    = ~PORTCbits.RC6;
 
 		TMR5 = 0; 					
 		PR5  = Periode_Canon; 			
 		T5CONbits.TON = 1;
 
-		Cpt_Tmr4 = 0;
-		Cpt_Tmr4_Turbine = 0;
+		Cpt_Tmr_Pwm[0] = 0;
+		Cpt_Tmr_Pwm[1] = 0;
+		Cpt_Tmr_Pwm[2] = 0;
 	}
-	IFS1bits.T4IF = 0; 		//Clear Timer1 Interrupt flag
 }
 
+//Interrupt induced every ~ms +-2ms
 void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
 
 	T5CONbits.TON = 0;
@@ -193,6 +222,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
 }
 
 //Interruption Input Capture
+//Interruption induced on every 16th Rising Edge
 void __attribute__((__interrupt__,__auto_psv__)) _IC1Interrupt(void)
 {
 	unsigned int t1,t2;
@@ -206,7 +236,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _IC1Interrupt(void)
 	else
 		Valeur_Capteur_Couleur = (PR3 - t1) + t2;
 }
-//Fin 2013
+
 
 
 Trame PiloteGotoXY(int x,int y, unsigned char x_negatif, unsigned char y_negatif)
@@ -712,15 +742,15 @@ Trame AnalyseTrame(Trame t)
 
 		case CMD_ECHO:
 			retour = t;
-			break;
+		break;
 
-		case CMD_COUPURE_ALIMENTATION:
+		case CMD_ALIMENTATION:
 			// Commande alimentation
-			param1 = t.message[2];							// On ou Off
+			param1 = !t.message[2];							// On ou Off
 			PiloteAlimentation(param1);
-			break;
+		break;
 
-		case CMD_COUPURE_ALIMENTATION_CAMERA:
+		case CMD_ALIMENTATION_CAMERA:
 			// Commande alimentation
 			param1 = t.message[2];							// On ou Off
 			PiloteAlimentationCamera(param1);
@@ -739,9 +769,7 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDE_PRESENCE_ASPIRATEUR:
 			// Interrupteur couleur Equipe
 			retour = Presence_Aspirateur();
-			break;
-			
-		// Commandes spéciales Pwet Debug
+		break;
 
 		case CMD_OFFSETASSERV:
 
@@ -761,7 +789,7 @@ Trame AnalyseTrame(Trame t)
 		break;
 
 		case CMD_VITESSE_ASPIRATEUR:
-			param1 = (t.message[2]*256+t.message[3]) + 313;			
+			param1 = (t.message[2]*256+t.message[3]+4);			
 			Aspirateur_Vitesse(param1);
 		break;
 
@@ -775,14 +803,20 @@ Trame AnalyseTrame(Trame t)
 				Shutter_Pos(SHUTTER_BLOQUE);
 			else 
 				Shutter_Pos(SHUTTER_PAS_BLOQUE);
-		break;	
-
+		break;
+	
 		case CMD_SERVO_POSITION:
-			// Bouge servomoteur
-			param1 = t.message[2];						// Id servo
-			param2 = t.message[3] * 256 + t.message[4];	// Position
-			param3 = 19100;
-			CDS5516Pos(param3,param1,param2);
+			if(t.message[2] == ID_SERVO_ASSIETTE)
+			{
+				Assiette_Position(t.message[3]*256+t.message[4]+4);
+			}
+			else 
+			{
+				param1 = t.message[2];						// Id servo
+				param2 = t.message[3] * 256 + t.message[4];	// Position
+				param3 = 19100;
+				CDS5516Pos(param3,param1,param2);
+			}
 		break;	
 
 		case CMD_SERVO_VITESSE:
@@ -800,12 +834,14 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDE_COULEUR:
 			return Couleur_Balle();
 		break;
+
 		case CMD_POMPE_A_VIDE:
 			Commande_Pompe(t.message[2]);
 		break;
+
 		case 0xF2:
 			Reset();
-			break;
+		break;
 	}
 	return retour;
 }

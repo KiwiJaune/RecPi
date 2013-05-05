@@ -9,7 +9,7 @@ void Init_Timer4(void);
 
 void InitADC(void);
 void InitDMA(void);
-void Init_Timer (void);
+void Init_Timer(void);
 void Init_Input_Capture(void);
 void Init_Interrupt_Priority(void);
 

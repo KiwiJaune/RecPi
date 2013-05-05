@@ -22,36 +22,21 @@ void PilotePIDFeedforward(unsigned int value);
 void PiloteResetAx();
 Trame PilotePositionXYT(void);
 Trame PiloteDemandeCapteurs(char numCapteur);
-
 void PiloteAlimentationCamera(char onOff);
-
 void PilotePositionAx(char numAx, int position);
-
 void PiloteLedAx(char numAx, char allume);
-
 void PiloteVitesseAx(char numAx, int vitesse);
-
 void PiloteAvalageSens(char avantOuArriere, char sensRotation);
-
 void PiloteAvalageVitesse(char avantOuArriere, int vitesse);
-
 void PiloteLevagePosition(char avantOuArriere, int position);
-
 void PiloteLevageVitesse(char avantOuArriere, int vitesse);
-
 Trame PiloteSwitchEnclanche(char numSwitch);
-
 Trame PiloteDemandeCapteur(char numCapteur);
-
 void PilotePositionPetitBras(char numPetitBras, int position);
-
 void PiloteVitessePetitBras(char numPetitBras, int vitesse);
-
-
 Trame PiloteSwitchTour();
 Trame PiloteMesureBalise();
 void PiloteLevagePosition(char avantOuArriere, int position);
-
 Trame PiloteCapteurs(char cote);
 
 int Coupure(void);
@@ -66,17 +51,21 @@ int Coupure(void);
 #define DEBLOQUE_BAS 550
 #define DEBLOQUE_HAUT 250
 
-#define INIT_TURBINE 312 //Previous Value 5000
+#define INIT_TURBINE 4 			//312
 #define INIT_CANON 5000
+#define INIT_PERIODE_ASSIETTE 4
+
+#define CPT_PERIODE_20MS 80
 
 #define CANON_ACTIVE 5500
 #define CANON_DESACTIVE 5000
 #define CANON_ACTIVE_MAX 10000
 
-#define ASPIRATION_ACTIVE 625
-#define ASPIRATION_DESACTIVE 312
+#define ASPIRATION_ACTIVE 8		//625
+#define ASPIRATION_DESACTIVE 4	//312
 
 #define ID_SERVO_ASPIRATEUR 16 //0
+#define ID_SERVO_ASSIETTE 6  //16 ou 2
 #define ID_SERVO_DEBLOQUEUR 0  //16 ou 2
 #define ALL_SERVO 254
 
@@ -86,6 +75,7 @@ int Coupure(void);
 
 #define SIGNAL_TURBINE LATCbits.LATC7
 #define SIGNAL_CANON LATCbits.LATC6
+#define SIGNAL_ASSIETTE LATBbits.LATB11
 
 #define POMPE_ACTIVE 1
 #define POMPE_DESACTIVE 0
@@ -99,14 +89,22 @@ int Coupure(void);
 void Init_Turbine(void);
 void Init_Servos(void);
 void Init_Pompe(void);
+
 void Canon_Vitesse(unsigned int vitesse);
 void Aspirateur_Vitesse(unsigned int vitesse);
+void Assiette_Position(unsigned int vitesse);
+
 void Commande_Pompe(unsigned char Etat_Pompe);
 unsigned int Send_Variable_Capteur_Couleur(void);
+void Pwm_Generateur(unsigned int tab_cpt[],unsigned char Taille_Tab);
 
 //Initialisation timer 3,4 et 5
 void Init_Timer (void);
 
+//Delay
+void delay(void);
+void delays(void);
+void delayms(void);
 //ASSERVISSEMENT
 
 int PiloteVitesse(int vitesse);
@@ -170,8 +168,8 @@ Trame AnalyseTrame(Trame t);
 #define CMD_REPONSE_PRESENCE_ASPIRATEUR	0x7D
 
 // Alimentation
-#define CMD_COUPURE_ALIMENTATION		0x80
-#define CMD_COUPURE_ALIMENTATION_CAMERA 0x81	
+#define CMD_ALIMENTATION		0x80
+#define CMD_ALIMENTATION_CAMERA 0x81	
 
 // Diagnostic
 #define	CMD_ECHO						0xF0
