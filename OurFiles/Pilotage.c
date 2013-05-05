@@ -804,7 +804,7 @@ Trame AnalyseTrame(Trame t)
 		break;
 
 		case CMD_VITESSE_ASPIRATEUR:
-			param1 = ((t.message[3]*256+t.message[4])+312);			
+			param1 = ((t.message[2]*256+t.message[3]) + 312);			
 			Aspirateur_Vitesse(param1);
 		break;
 
