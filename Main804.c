@@ -40,14 +40,6 @@ _FICD(ICS_PGD3 & JTAGEN_OFF)
 #define S2 LATBbits.LATB0 
 #define S3 LATAbits.LATA10 
 
-//Define Compteur PWM
-#define CPT_TIMER4_PERIODE_20MS 0 
-#define CPT_TIMER4_TURBINE_DUTYCYCLE 1
-#define CPT_TIMER4_SERVO_DUTYCYCLE 2
-#define CPT_TIMER4_ASSER 4
-
-#define TAILLE_TAB_CPT 3
-
 APP_CONFIG AppConfig;
 
 static void InitAppConfig(void);
@@ -70,7 +62,6 @@ unsigned int Tab_Capteur_Couleur[8] = {0};
 unsigned char etat_Capteur_Couleur = 0;
 
 //Variable Pwm_Servos_Timer2
-unsigned int Tab_Cpt_PWM[TAILLE_TAB_CPT];
 unsigned int Cpt_Timer4 = 0;
 
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
@@ -144,7 +135,6 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
-	delays();
     Init_Timer();	// Initialisation Timer2,Timer4 & Timer5
     
 	InitQEI(); 		// Initialisation des entrées en quadrature
@@ -178,10 +168,19 @@ int main(void)
 	Init_Servos();
 	Init_Pompe();
 	Init_Input_Capture();
+	Init_Alimentation();
 
-	LATAbits.LATA3 = 1; // Init Alim
 	while(1)
   	{		
+
+//		Canon_Vitesse(5000);
+//		Aspirateur_Vitesse(312);
+//		Assiette_Position(312);
+//		delays();
+//		Canon_Vitesse(5600);
+//		Aspirateur_Vitesse(625);
+//		Assiette_Position(625);
+//		delays();
 
 	  	if(!PORTAbits.RA8 && jackAvant)
 	  	{
@@ -434,107 +433,94 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 	courrier = 1;
 	motor_flag = Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
 	
-	Cpt_Timer4++;
-
-	if(Cpt_Timer4 == CPT_TIMER4_ASSER)
+	if(motor_flag == 0x10)
 	{
-		Cpt_Timer4 = 0; 
+		motor_flag=0;
+		flag_envoi=1;
+	}
+	if(motor_flag == 0x20)
+	{
+		motor_flag=0;
+		flag_distance=1;
+	}
+	if(motor_flag == 0x30)
+	{
+		motor_flag=0;
+		flag_calage=1;
+	}
+	if(motor_flag == 0x40)
+	{
+		motor_flag=0;
+		flag_blocage=1;
+	}
+	
+	/*if(datalogger_blocker==0)
+	{
+		if(++datalogger_counter>500) 
+			datalogger_counter = 0;
+		datalogger_ga[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_GAUCHE);
+		datalogger_dr[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_DROIT);
+	}*/
+	PID_ressource_used = (TMR4); //Previous value TMR4
 
-		if(motor_flag == 0x10)
-		{
-			motor_flag=0;
-			flag_envoi=1;
-		}
-		if(motor_flag == 0x20)
-		{
-			motor_flag=0;
-			flag_distance=1;
-		}
-		if(motor_flag == 0x30)
-		{
-			motor_flag=0;
-			flag_calage=1;
-		}
-		if(motor_flag == 0x40)
-		{
-			motor_flag=0;
-			flag_blocage=1;
-		}
-		
-		/*if(datalogger_blocker==0)
-		{
-			if(++datalogger_counter>500) 
-				datalogger_counter = 0;
-			datalogger_ga[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_GAUCHE);
-			datalogger_dr[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_DROIT);
-		}*/
-		PID_ressource_used = (TMR4); //Previous value TMR4
-	
-		Cpt_Tmr2_Capteur_Couleur++;
-	
-		if(Cpt_Tmr2_Capteur_Couleur == 20)
-		{
-			Cpt_Tmr2_Capteur_Couleur = 0;
-	
-			switch(++etat_Capteur_Couleur){
-	
-				case 1:
-					Tab_Capteur_Couleur[0] = Send_Variable_Capteur_Couleur();
-					S3  = 0; 
-					S2  = 0;
-					LED = 0;
-				break;
-				case 2:
-					Tab_Capteur_Couleur[1] = Send_Variable_Capteur_Couleur();
-					S3  = 1; 
-					S2  = 0;
-					LED = 0;
-				break;
-				case 3:
-					Tab_Capteur_Couleur[2] = Send_Variable_Capteur_Couleur();
-					S3  = 0; 
-					S2  = 1;
-					LED = 0;
-				break;
-				case 4:
-					Tab_Capteur_Couleur[3] = Send_Variable_Capteur_Couleur();
-					S3  = 1; 
-					S2  = 1;
-					LED = 0;
-				break;
-				case 5:
-					Tab_Capteur_Couleur[4] = Send_Variable_Capteur_Couleur();
-					S3  = 0; 
-					S2  = 0;
-					LED = 1;
-				break;
-				case 6:
-					Tab_Capteur_Couleur[5] = Send_Variable_Capteur_Couleur();
-					S3  = 1; 
-					S2  = 0;
-					LED = 1;
-				break;
-				case 7:
-					Tab_Capteur_Couleur[6] = Send_Variable_Capteur_Couleur();
-					S3  = 0; 
-					S2  = 1;
-					LED = 1;
-				break;
-				case 8:
-					Tab_Capteur_Couleur[7] = Send_Variable_Capteur_Couleur();
-					S3  = 1; 
-					S2  = 1;
-					LED = 1;
-					etat_Capteur_Couleur = 0;
-				break;
-			}
+	Cpt_Tmr2_Capteur_Couleur++;
+
+	if(Cpt_Tmr2_Capteur_Couleur == 20)
+	{
+		Cpt_Tmr2_Capteur_Couleur = 0;
+
+		switch(++etat_Capteur_Couleur){
+
+			case 1:
+				Tab_Capteur_Couleur[0] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 0;
+				LED = 0;
+			break;
+			case 2:
+				Tab_Capteur_Couleur[1] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 0;
+				LED = 0;
+			break;
+			case 3:
+				Tab_Capteur_Couleur[2] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 1;
+				LED = 0;
+			break;
+			case 4:
+				Tab_Capteur_Couleur[3] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 1;
+				LED = 0;
+			break;
+			case 5:
+				Tab_Capteur_Couleur[4] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 0;
+				LED = 1;
+			break;
+			case 6:
+				Tab_Capteur_Couleur[5] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 0;
+				LED = 1;
+			break;
+			case 7:
+				Tab_Capteur_Couleur[6] = Send_Variable_Capteur_Couleur();
+				S3  = 0; 
+				S2  = 1;
+				LED = 1;
+			break;
+			case 8:
+				Tab_Capteur_Couleur[7] = Send_Variable_Capteur_Couleur();
+				S3  = 1; 
+				S2  = 1;
+				LED = 1;
+				etat_Capteur_Couleur = 0;
+			break;
 		}
 	}
-	Tab_Cpt_PWM[CPT_TIMER4_PERIODE_20MS]++;
-	Tab_Cpt_PWM[CPT_TIMER4_TURBINE_DUTYCYCLE]++;
-	Tab_Cpt_PWM[CPT_TIMER4_SERVO_DUTYCYCLE]++;
-
-	Pwm_Generateur(Tab_Cpt_PWM,TAILLE_TAB_CPT);
-	
 	IFS1bits.T4IF = 0;
 }

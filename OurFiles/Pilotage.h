@@ -51,22 +51,22 @@ int Coupure(void);
 #define DEBLOQUE_BAS 550
 #define DEBLOQUE_HAUT 250
 
-#define INIT_TURBINE 4 			//312
+#define INIT_TURBINE 312			
 #define INIT_CANON 5000
-#define INIT_PERIODE_ASSIETTE 4
+#define INIT_ASSIETTE 312
 
-#define CPT_PERIODE_20MS 80
+#define CPT_PERIODE_20MS 6250
 
 #define CANON_ACTIVE 5500
 #define CANON_DESACTIVE 5000
 #define CANON_ACTIVE_MAX 10000
 
-#define ASPIRATION_ACTIVE 8		//625
-#define ASPIRATION_DESACTIVE 4	//312
+#define ASPIRATION_ACTIVE 625	
+#define ASPIRATION_DESACTIVE 312	
 
-#define ID_SERVO_ASPIRATEUR 16 //0
-#define ID_SERVO_ASSIETTE 6  //16 ou 2
-#define ID_SERVO_DEBLOQUEUR 0  //16 ou 2
+#define ID_SERVO_ASPIRATEUR 16 	//0
+#define ID_SERVO_ASSIETTE 6  	//16 ou 2
+#define ID_SERVO_DEBLOQUEUR 0  	//16 ou 2
 #define ALL_SERVO 254
 
 #define SHUTTER_BLOQUE 0
@@ -96,10 +96,12 @@ void Assiette_Position(unsigned int vitesse);
 
 void Commande_Pompe(unsigned char Etat_Pompe);
 unsigned int Send_Variable_Capteur_Couleur(void);
-void Pwm_Generateur(unsigned int tab_cpt[],unsigned char Taille_Tab);
 
 //Initialisation timer 3,4 et 5
 void Init_Timer (void);
+
+//Initialisation Alimentation
+void Init_Alimentation(void);
 
 //Delay
 void delay(void);
