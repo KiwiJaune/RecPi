@@ -6,7 +6,10 @@
 #include "CDS5516.h"
 
 // ATTENTION /!\ Ces fonctions ne doivent pas être bloquantes
-extern unsigned int vitesse_canon;
+extern unsigned int capteur_vitesse;
+extern unsigned char desactive_interrupt;
+extern unsigned int cpt_capteur_vitesse;
+extern double vitesse_canon;
 extern unsigned int consigne_canon;
 extern unsigned int ADC_Results[8];
 extern unsigned int position_buffer[6];
@@ -199,10 +202,23 @@ void Assiette_Position(unsigned int vitesse)
 //Function generates PWM through Timer 2 ISR, induced every 1ms
 void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 {
+	static unsigned char k=0;
 	Cpt_Tmr_Periode++;			
 	Cpt_Tmr_Pwm_Turbine++;
 	Cpt_Tmr_Pwm_Assiette++;
 	
+	if(cpt_capteur_vitesse<8000) 
+		cpt_capteur_vitesse++;
+
+	if(flag_capteur_vitesse)
+	{
+		desactive_interrupt=3;
+		flag_capteur_vitesse=0;	
+		capteur_vitesse=cpt_capteur_vitesse;		
+		cpt_capteur_vitesse=0;
+	}
+
+
 	if(Cpt_Tmr_Pwm_Turbine == Periode_Turbine)
 	{
 		SIGNAL_TURBINE = FALLING_EDGE;		
@@ -322,8 +338,8 @@ Trame PiloteMesureCanon()
 	
 	tableau[0] = 0xC1;
 	tableau[1] = CMD_REPONSE_MESURE_CANON;
-	tableau[2] = vitesse_canon>>8;
-	tableau[3] = vitesse_canon&0x00FF;
+	tableau[2] = (unsigned int)vitesse_canon>>8;
+	tableau[3] = (unsigned int)vitesse_canon&0x00FF;
 
 	trame.message = tableau;	
 	return trame;
@@ -830,7 +846,7 @@ Trame AnalyseTrame(Trame t)
 		break;
 
 		case CMD_VITESSE_ASPIRATEUR:
-			param1 = ((t.message[3]*256+t.message[4])+312);			
+			param1 = ((t.message[2]*256+t.message[3]) + 312);			
 			Aspirateur_Vitesse(param1);
 		break;
 

@@ -66,10 +66,10 @@ unsigned int Cpt_Timer4 = 0;
 
 //Variable Capteur de vitesse
 unsigned char flag_capteur_vitesse;
-unsigned char tab_capteur_vitesse[8];
-unsigned int vitesse_canon;
+double vitesse_canon;
 unsigned int consigne_canon;
-
+unsigned int cpt_capteur_vitesse,capteur_vitesse;
+unsigned char desactive_interrupt;
 
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
@@ -179,16 +179,6 @@ int main(void)
 
 	while(1)
   	{		
-
-//		Canon_Vitesse(5000);
-//		Aspirateur_Vitesse(312);
-//		Assiette_Position(312);
-//		delays();
-//		Canon_Vitesse(5600);
-//		Aspirateur_Vitesse(625);
-//		Assiette_Position(625);
-//		delays();
-
 	  	if(!PORTAbits.RA8 && jackAvant)
 	  	{
 		  	EnvoiUserUdp (Jack);
@@ -436,9 +426,6 @@ void SaveAppConfig(void)
 
 void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void) 
 {
-	static unsigned char cpt_capteur_vitesse,desactive_interrupt;
-	unsigned int temp;
-	unsigned char i,k;
 	
 	flag = 0;
 	courrier = 1;
@@ -449,24 +436,11 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 		IFS0bits.IC2IF = 0;
 		IEC0bits.IC2IE = 1;
 	}	
-	if(flag_capteur_vitesse)
-	{
-		desactive_interrupt=3;
-		flag_capteur_vitesse=0;	
-		tab_capteur_vitesse[k++]=cpt_capteur_vitesse;
-		temp=0;
-		for(i=0;i<7;i++)
-			temp+= (unsigned int)tab_capteur_vitesse[i];
-		temp=temp>>8;
-		vitesse_canon = (unsigned int)(1000/temp); // résultat en tour/min
-		if(k>7) 
-			k=0;
-		cpt_capteur_vitesse=0;
+	
+	vitesse_canon = (60*1000000/(3.2*(double)capteur_vitesse)); // résultat en tour/min
+	
 		
-	}
-	if(cpt_capteur_vitesse<250) 
-		cpt_capteur_vitesse++;
-
+	
 	if(motor_flag == 0x10)
 	{
 		motor_flag=0;

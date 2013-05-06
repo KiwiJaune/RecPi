@@ -21,6 +21,7 @@ void Init_Interrupt_Priority(void)
 {
 	
 	IPC0bits.IC1IP  = 6;			//Input Capture used by Capteur Couleur	
+	IPC1bits.IC2IP  = 6;
 	IPC0bits.T1IP   = 5;			//Timer 1 used by Ethernet (Default value = 2)
 	IPC1bits.T2IP   = 6;			//Timer 2 used to generate PWM
 //	IPC2bits.T3IP   = 7;			//Interrupt UNUSED
@@ -166,10 +167,10 @@ void Init_Timer2(void)
 	T2CONbits.TGATE = 0;
 	T2CONbits.TCS	= 0;
 	T2CONbits.T32	= 0;
-	T2CONbits.TCKPS = 0b10; //Prescaler set to 1:8
+	T2CONbits.TCKPS = 0b10; //Prescaler set to 1:64
 	
 	TMR2 = 0; 				//Clear timer register
-	PR2  = 1;				//Load the period value (5000 = 0.5ms)
+	PR2  = 1;				//Load the period value (1 = 3.2us)
 
 //	IPC1bits.T2IP = 4; 		//Set Timer2 Interrupt Priority Level
 	IFS0bits.T2IF = 0; 		//Clear Timer2 Interrupt Flag
