@@ -232,7 +232,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 	{
 		SIGNAL_ASSIETTE = RISING_EDGE;
 		SIGNAL_TURBINE  = RISING_EDGE;
-		SIGNAL_CANON    = ~PORTCbits.RC6;
+		SIGNAL_CANON    = RISING_EDGE;
 
 		TMR5 = 0; 					
 		PR5  = Periode_Canon; 			
@@ -251,7 +251,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
 	T5CONbits.TON = 0;
 	IFS1bits.T5IF = 0; 		//Clear Timer1 Interrupt flag
 
-	SIGNAL_CANON = ~PORTCbits.RC6;
+	SIGNAL_CANON = FALLING_EDGE;
 }
 
 //Interruption Input Capture
@@ -902,6 +902,7 @@ Trame AnalyseTrame(Trame t)
 		
 		case CMD_CONSIGNE_CANON:
 			consigne_canon= t.message[2] * 256 + t.message[3];
+			if(consigne_canon==0) Canon_Vitesse(5000);
 		break;
 		
 		case CMD_RESET_CARTE:

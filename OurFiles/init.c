@@ -22,13 +22,13 @@ void Init_Interrupt_Priority(void)
 	
 	IPC0bits.IC1IP  = 6;			//Input Capture used by Capteur Couleur	
 	IPC1bits.IC2IP  = 6;
-	IPC0bits.T1IP   = 5;			//Timer 1 used by Ethernet (Default value = 2)
-	IPC1bits.T2IP   = 6;			//Timer 2 used to generate PWM
+	IPC0bits.T1IP   = 4;	//5		//Timer 1 used by Ethernet (Default value = 2)
+	IPC1bits.T2IP   = 5;	//6		//Timer 2 used to generate PWM
 //	IPC2bits.T3IP   = 7;			//Interrupt UNUSED
 	IPC2bits.U1RXIP = 4;			//UART RX Interrupt
 	IPC3bits.U1TXIP = 4;			//UART TX Interrupt
 	IPC6bits.T4IP   = 3;			//Timer 4 Used by Asser
-	IPC7bits.T5IP   = 5;			//Timer 5 Used by Canon
+	IPC7bits.T5IP   = 6;	//5		//Timer 5 Used by Canon
 	IPC14bits.QEI1IP = 7;			//Quad Encoder Interrupt
 	IPC18bits.QEI2IP = 7;			//Quad Encoder Interrupt
 }

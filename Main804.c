@@ -437,9 +437,10 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 	if(cpt_asser_canon++>prd_asser_canon)
 	{
 		if(consigne_canon == 0) etat_canon =0;
+		else					Canon_Vitesse(puissance);
 		switch(etat_canon)
 		{
-			case 0:	puissance=0;//IDLE
+			case 0:	puissance=5000;//IDLE
 					if(consigne_canon!=0)	etat_canon++; // WAKE UP !
 					break;
 			case 1:	prd_asser_canon=300;
@@ -455,7 +456,6 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 					if(vitesse_canon_brut>(consigne_canon+15)) puissance-=1;
 					break;
 		}
-		Canon_Vitesse(puissance);
 		cpt_asser_canon=0;
 	}
 	
