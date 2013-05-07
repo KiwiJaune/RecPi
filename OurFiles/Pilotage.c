@@ -6,6 +6,7 @@
 #include "CDS5516.h"
 
 // ATTENTION /!\ Ces fonctions ne doivent pas être bloquantes
+extern unsigned char jackAvant;
 extern unsigned int capteur_vitesse;
 extern unsigned char desactive_interrupt;
 extern unsigned int cpt_capteur_vitesse;
@@ -905,6 +906,9 @@ Trame AnalyseTrame(Trame t)
 		
 		case CMD_RESET_CARTE:
 			Reset();
+		break;
+		case CMD_ARME_JACK:
+			jackAvant=1;
 		break;
 	}
 	return retour;

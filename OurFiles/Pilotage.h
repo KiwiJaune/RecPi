@@ -172,6 +172,7 @@ Trame AnalyseTrame(Trame t);
 #define CMD_REPONSE_PRESENCE_ASPIRATEUR	0x7D
 #define CMD_DEMANDE_MESURE_CANON		0x7E
 #define CMD_REPONSE_MESURE_CANON		0x7F
+#define CMD_ARME_JACK					0x70
 
 // Alimentation
 #define CMD_ALIMENTATION		0x80

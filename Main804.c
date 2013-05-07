@@ -49,12 +49,11 @@ extern double cons_pos[N];
 extern double real_pos[N];
 extern unsigned char scan;
 
+unsigned char jackAvant = 0;
 unsigned char motor_flag=0,datalogger_blocker=0;
 double position_lock;
-//double datalogger_ga[500]={0};
-//double datalogger_dr[500]={0};
 unsigned int datalogger_counter=0,flag=0,courrier=0,PID_ressource_used;
-unsigned char flag_envoi=0,flag_distance=0,flag_blocage=0,flag_calage=0;
+unsigned char flag_envoi=0,flag_blocage=0,flag_calage=0;
 
 //Variable Capteur Couleur
 unsigned int Cpt_Tmr2_Capteur_Couleur = 0;
@@ -88,10 +87,11 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 
 int main(void)
 {
-	unsigned char hold_blocage;
-	unsigned char jackAvant = 1, etatCouleur = 2;
+	unsigned char etatCouleur = 2;
 	static DWORD dwLastIP = 0;
 	
+	Trame trame;		
+
 	Trame Jack;
 	static BYTE Presence[2];
 	Jack.nbChar = 2;
@@ -113,14 +113,7 @@ int main(void)
 	mess[1] = CMD_FINDEPLACEMENT;
 	envoiFin.message = mess;
 	envoiFin.nbChar = 2;
-	
-	/*Trame envoiDistance;
-	static BYTE messdistance[4];
-	messdistance[0] = 0xC1;
-	messdistance[1] = 0x50;
-	envoiDistance.message = messdistance;
-	envoiDistance.nbChar = 4;*/
-	
+		
 	Trame envoiBlocage;
 	static BYTE messblocage[2];
 	messblocage[0] = 0xC1;
@@ -134,15 +127,6 @@ int main(void)
 	messcalage[1] = CMD_FINRECALLAGE;
 	envoiCalage.message = messcalage;
 	envoiCalage.nbChar = 2;
-
-	Trame envoiDebugAsser;
-	static BYTE Debug_Asser[4];
-//	Debug_Asser[0] = erreur[0];
-//	Debug_Asser[1] = erreur[1];
-//	Debug_Asser[2] = cor[0];
-//	Debug_Asser[3] = cor[1];
-	envoiDebugAsser.message = Debug_Asser;
-	Trame trame;	
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
@@ -171,8 +155,6 @@ int main(void)
 	
 	// Interrupt Priority
 	Init_Interrupt_Priority();							
-
-	hold_blocage=0;
 	
 	InitUART2();	
 	Init_Turbine(); 
@@ -183,7 +165,7 @@ int main(void)
 	
 	while(1)
   	{		
-	  	if(!PORTAbits.RA8 && jackAvant)
+	  	if(PORTAbits.RA8 && jackAvant)
 	  	{
 		  	EnvoiUserUdp (Jack);
 		  	jackAvant = 0;
@@ -199,14 +181,6 @@ int main(void)
 			scan=0;
 			EnvoiUserUdp(envoiFin);
 			flag_envoi = 0;
-		}
-		if(flag_distance) 
-		{
-			/*distanceRestante = (int)Stop(2);	// Abrupt
-			messdistance[2] = distanceRestante >> 8;
-			messdistance[3] = distanceRestante & 0xFF;
-			EnvoiUserUdp(envoiDistance);*/
-			flag_distance = 0;
 		}
 		if(flag_blocage)
 		{
@@ -490,11 +464,6 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 		motor_flag=0;
 		flag_envoi=1;
 	}
-	if(motor_flag == 0x20)
-	{
-		motor_flag=0;
-		flag_distance=1;
-	}
 	if(motor_flag == 0x30)
 	{
 		motor_flag=0;
@@ -506,13 +475,7 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 		flag_blocage=1;
 	}
 	
-	/*if(datalogger_blocker==0)
-	{
-		if(++datalogger_counter>500) 
-			datalogger_counter = 0;
-		datalogger_ga[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_GAUCHE);
-		datalogger_dr[datalogger_counter] = (int)Motors_GetPosition(MOTEUR_DROIT);
-	}*/
+	
 	PID_ressource_used = (TMR4); //Previous value TMR4
 
 	Cpt_Tmr2_Capteur_Couleur++;
