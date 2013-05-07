@@ -57,8 +57,6 @@ unsigned int Valeur_Capteur_Couleur = 24;
 unsigned int Old_IC1Buf = 0;
 
 unsigned int Cpt_Tmr_Periode = 0;
-unsigned int Cpt_Tmr_Pwm_Turbine = 0;
-unsigned int Cpt_Tmr_Pwm_Assiette = 0;
 
 void delay(void)
 {
@@ -84,8 +82,6 @@ void Init_Turbine(void)
 {		
 	Aspirateur_Vitesse(INIT_TURBINE);	
  	Canon_Vitesse(INIT_CANON);
-	//delays();
-	//delays();
 }
 //Initialisation des servos moteurs selon les positions suivantes: 
 //Bras_Aspirateur : Retracte
@@ -190,7 +186,7 @@ void Aspirateur_Vitesse(unsigned int vitesse)
 //Value range 5000(1ms) <--> 10000(2ms) 
 void Canon_Vitesse(unsigned int vitesse)
 {
-	Periode_Canon = vitesse;
+	Periode_Canon = vitesse;	
 }
 
 //Function controls the position of assiette servo
@@ -204,8 +200,6 @@ void Assiette_Position(unsigned int vitesse)
 void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 {
 	Cpt_Tmr_Periode++;			
-	Cpt_Tmr_Pwm_Turbine++;
-	Cpt_Tmr_Pwm_Assiette++;
 		
 	if(cpt_capteur_vitesse<8000) // 8000 car 8000*8 < 65536
 		cpt_capteur_vitesse++;
@@ -219,12 +213,12 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 	}
 
 	
-	if(Cpt_Tmr_Pwm_Turbine == Periode_Turbine)
+	if(Cpt_Tmr_Periode == Periode_Turbine)
 	{
 		SIGNAL_TURBINE = FALLING_EDGE;		
 	}
 		
-	if(Cpt_Tmr_Pwm_Assiette == Periode_Assiette)
+	if(Cpt_Tmr_Periode == Periode_Assiette)
 	{
 		SIGNAL_ASSIETTE = FALLING_EDGE;		
 	}
@@ -239,8 +233,6 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 		T5CONbits.TON = 1;
 
 		Cpt_Tmr_Periode = 0;
-		Cpt_Tmr_Pwm_Turbine = 0;
-		Cpt_Tmr_Pwm_Assiette = 0;
 	}
 	IFS0bits.T2IF = 0; 		//Clear Timer1 Interrupt flag
 }
