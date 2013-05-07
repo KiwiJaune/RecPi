@@ -332,13 +332,6 @@ unsigned char Motors_Task(void)
 	
 	motors_ok=pid(1,cons_pos,real_pos); // 150µs Max
 
-	if(motion[0] == 0 && motion[1] == 0)	
-	{
-		if(kd_cancel <255)	kd_cancel++;
-
-	}
-	else				kd_cancel = 0;
-	
 	for(i=0;i<N;i++)
 		if(motion[i] == 11 || motion[i] == 21 || motion[i] == 22)
 			if((cpt_calage[0] > 20) && (cpt_calage[1] > 20) && motiontype ==3) // 50	
@@ -563,13 +556,11 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 			if(pid_count == 1000) 	cor[i] = erreur[i]*(kp[i]-5);
 			else					cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
 			
-			//if(kd_cancel < 200)	cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
-			//else				cor[i] = erreur[i]*4 ;//+ (erreur[i] - erreur_old[i]);
 			erreur_old[i] = erreur[i]; // Mise a jour necessaire pour le terme derive
 			pwm_cor[i] = cor[i];
 		}
-		pwm(GAUCHE,cor[0]);
-		pwm(DROITE,cor[1]);
+		pwm(GAUCHE,cor[0]); // a dequote (test)
+		pwm(DROITE,cor[1]); // a dequote (test)
 	}
 	return fabs(cor[0]) + fabs(cor[1]);
 }

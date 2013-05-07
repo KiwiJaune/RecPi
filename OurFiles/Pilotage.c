@@ -83,8 +83,8 @@ void Init_Turbine(void)
 {		
 	Aspirateur_Vitesse(INIT_TURBINE);	
  	Canon_Vitesse(INIT_CANON);
-	delays();
-	delays();
+	//delays();
+	//delays();
 }
 //Initialisation des servos moteurs selon les positions suivantes: 
 //Bras_Aspirateur : Retracte
@@ -199,26 +199,25 @@ void Assiette_Position(unsigned int vitesse)
 	Periode_Assiette = vitesse;
 }
 
-//Function generates PWM through Timer 2 ISR, induced every 1ms
+//Function generates PWM through Timer 2 ISR, induced every 3.2us
 void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 {
-	static unsigned char k=0;
 	Cpt_Tmr_Periode++;			
 	Cpt_Tmr_Pwm_Turbine++;
 	Cpt_Tmr_Pwm_Assiette++;
-	
-	if(cpt_capteur_vitesse<8000) 
+		
+	if(cpt_capteur_vitesse<8000) // 8000 car 8000*8 < 65536
 		cpt_capteur_vitesse++;
 
 	if(flag_capteur_vitesse)
 	{
-		desactive_interrupt=3;
-		flag_capteur_vitesse=0;	
-		capteur_vitesse=cpt_capteur_vitesse;		
-		cpt_capteur_vitesse=0;
+		desactive_interrupt=3; 	// Desactive l'interuption du captuer vitesse pendant 3 ms (protection anti rebonds)
+		flag_capteur_vitesse=0;	// ACK
+		capteur_vitesse=cpt_capteur_vitesse; // Stock la vitesse (période)
+		cpt_capteur_vitesse=0;	// Reinitialise le compteur soft
 	}
 
-
+	
 	if(Cpt_Tmr_Pwm_Turbine == Periode_Turbine)
 	{
 		SIGNAL_TURBINE = FALLING_EDGE;		
@@ -340,7 +339,7 @@ Trame PiloteMesureCanon()
 	tableau[1] = CMD_REPONSE_MESURE_CANON;
 	tableau[2] = (unsigned int)vitesse_canon>>8;
 	tableau[3] = (unsigned int)vitesse_canon&0x00FF;
-
+	
 	trame.message = tableau;	
 	return trame;
 }
@@ -707,7 +706,7 @@ int PiloteAvancerEtapes(int nombreEtapes, Etape etape)
 	return 1;
 }
 
-int PiloteOffsetAsserv(int x, int y, int teta) // marche pas
+int PiloteOffsetAsserv(int x, int y, int teta)
 {
 	pos_x = -y;
 	pos_y = -x;
@@ -904,7 +903,7 @@ Trame AnalyseTrame(Trame t)
 			consigne_canon= t.message[2] * 256 + t.message[3];
 		break;
 		
-		case 0xF2:
+		case CMD_RESET_CARTE:
 			Reset();
 		break;
 	}

@@ -70,6 +70,10 @@ double vitesse_canon;
 unsigned int consigne_canon;
 unsigned int cpt_capteur_vitesse,capteur_vitesse;
 unsigned char desactive_interrupt;
+unsigned int prd_asser_canon=50;
+
+
+
 
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
@@ -176,7 +180,7 @@ int main(void)
 	Init_Pompe();
 	Init_Input_Capture();
 	Init_Alimentation();
-
+	
 	while(1)
   	{		
 	  	if(!PORTAbits.RA8 && jackAvant)
@@ -426,20 +430,60 @@ void SaveAppConfig(void)
 
 void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void) 
 {
-	
+	static unsigned int cpt_asser_canon=0;
+	static unsigned char k=0;
+	unsigned char i=0;
+	double temp;
+	static double tab_vitesse_canon[16];
+	static unsigned int puissance;
+	static unsigned char etat_canon=0;	
+	static double vitesse_canon_brut;
+
 	flag = 0;
 	courrier = 1;
 	motor_flag = Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
 	
-	if(--desactive_interrupt==0)
+	if(--desactive_interrupt==0) // Si on passe dedans, c'est qu'on a retrouvé une nouvelle valeur de vitesse
 	{
 		IFS0bits.IC2IF = 0;
 		IEC0bits.IC2IE = 1;
-	}	
-	
-	vitesse_canon = (60*1000000/(3.2*(double)capteur_vitesse)); // résultat en tour/min
-	
+				
+		tab_vitesse_canon[k] = (60*1000000/(3.2*(double)capteur_vitesse)); // résultat en tour/min
+		vitesse_canon_brut=tab_vitesse_canon[k];
+		if(++k>15)	k=0;
 		
+		temp=0;
+		for(i=0;i<16;i++)
+		{
+			temp+=tab_vitesse_canon[k];
+		}
+		vitesse_canon = temp/16;
+	}
+
+	if(cpt_asser_canon++>prd_asser_canon)
+	{
+		if(consigne_canon == 0) etat_canon =0;
+		switch(etat_canon)
+		{
+			case 0:	puissance=0;//IDLE
+					if(consigne_canon!=0)	etat_canon++; // WAKE UP !
+					break;
+			case 1:	prd_asser_canon=300;
+					puissance=7200;
+					etat_canon++;
+					break;
+			case 2:	prd_asser_canon=50;
+					puissance=5500;
+					etat_canon++;
+					break;
+			case 3:	prd_asser_canon=70;
+					if(vitesse_canon_brut<(consigne_canon-15)) puissance+=1;
+					if(vitesse_canon_brut>(consigne_canon+15)) puissance-=1;
+					break;
+		}
+		Canon_Vitesse(puissance);
+		cpt_asser_canon=0;
+	}
 	
 	if(motor_flag == 0x10)
 	{
