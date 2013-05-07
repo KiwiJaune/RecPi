@@ -318,6 +318,7 @@ unsigned char Motors_Task(void)
 	static double lcurvi_old;
 	unsigned char retour = 0;
 	static double old_posi[N]={0};
+	static unsigned char cpt_blocage = 0;
 
 	lcurvi   = (real_pos[1] + real_pos[0])/2;
 	vitesse  = lcurvi - lcurvi_old;
@@ -431,17 +432,7 @@ unsigned char Motors_Task(void)
 
 		default :	break;
 	}
-	/*
-	// Detection de blocage
-	if((fabs(cons_pos[0]-real_pos[0]) > 10) || (fabs(cons_pos[1]-real_pos[1]) > 10)) // Seuil de detection blocage
-		retour = 0x20;
-*/
-	/*if(num_etape < nbr_etapes && real_pos[0] > etape_pos[num_etape])
-	{
-		//send
-		retour = num_etape;
-		num_etape++;		
-	}*/
+	
 	if(motiontype==3) // calage
 	{
 		for(i=0;i<N;i++)
@@ -463,10 +454,18 @@ unsigned char Motors_Task(void)
 		if(motiontype!=4)
 		{
 			for(i=0;i<N;i++)
-				if(fabs(cons_pos[i] - real_pos[i]) > 100)
+				if(fabs(cons_pos[i] - real_pos[i]) > 150)
 				{
-					Stop(FREELY);
-					retour = 0x40;
+					if(cpt_blocage++>20)
+					{
+						Stop(FREELY);
+						retour = 0x40;
+						return retour;
+					}
+				}
+				else
+				{
+					cpt_blocage =0;
 				}
 		}	
 		cpt_calage[0]=0;
