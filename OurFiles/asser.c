@@ -110,10 +110,10 @@ void Calage(unsigned char reculer)
 	
 	Motors_Start(MOTEUR_GAUCHE);
 	Motors_Start(MOTEUR_DROIT);
-	motiontype = 0; // Fake
+	motiontype = 4; // Fake
 	Sleepms(400);
-	cpt_calage[0]=0;
-	cpt_calage[1]=0;
+//	cpt_calage[0]=0;
+//	cpt_calage[1]=0;
 	motiontype = 3; // Calage
 	
 }
@@ -317,7 +317,7 @@ unsigned char Motors_Task(void)
 	double delta_x, delta_y, lcurvi, vitesse;
 	static double lcurvi_old;
 	unsigned char retour = 0;
-	static double old_posi[N];
+	static double old_posi[N]={0};
 
 	lcurvi   = (real_pos[1] + real_pos[0])/2;
 	vitesse  = lcurvi - lcurvi_old;
@@ -339,6 +339,7 @@ unsigned char Motors_Task(void)
 				motiontype = 0;
 				Stop(ABRUPT);
 				retour = 0x30;
+				return retour;
 			}
 
 	for(i=0;i<N;i++) switch(motion[i]) // 10:12 -> Triangulaire | 20:23 -> Trapezoidale
@@ -391,9 +392,9 @@ unsigned char Motors_Task(void)
 					break;
 
 		case 23	:	speed[i] -= accel[i] * 0.001; 								// Deceleration
-					if(speed[i] < 50)
+					if(speed[i] < 10)// 50 (07/05/2013)
 						{
-							speed[i]=50; 				// Ne devrais pas arriver, mais on ne sait jamais
+							speed[i]=10; //50	 (07/05/2013)			// Ne devrais pas arriver, mais on ne sait jamais
 							//motion[i] = 24;
 						}
 					if(sens[i])	cons_pos[i] += speed[i] * 0.001;
@@ -404,15 +405,12 @@ unsigned char Motors_Task(void)
 					break;
 
 		case 24	:	cons_pos[i] = targ_pos[i]; // On force l'exactitude du deplacement
-				//	if(motors_ok<200) 
 					if(i==0 && motion[0] == 24 && motion[1] == 24)
 					{
 						motion[0]=0;//1;
 						motion[1]=0;
 						// Envoi au pc la fin de la trajectoire, seulement si i=0 pour ne pas envoyer 2 fois (un seul moteur)
-						return(0x10);
-								
-							
+						return(0x10);	
 					}
 					break;
 					
@@ -462,12 +460,15 @@ unsigned char Motors_Task(void)
 	}
 	else
 	{
-		for(i=0;i<N;i++)
-			if(fabs(cons_pos[i] - real_pos[i]) > 100)
-			{
-				Stop(FREELY);
-				retour = 0x40;
-			}
+		if(motiontype!=4)
+		{
+			for(i=0;i<N;i++)
+				if(fabs(cons_pos[i] - real_pos[i]) > 100)
+				{
+					Stop(FREELY);
+					retour = 0x40;
+				}
+		}	
 		cpt_calage[0]=0;
 		cpt_calage[1]=0;
 	}
