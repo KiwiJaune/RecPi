@@ -318,7 +318,7 @@ unsigned char Motors_Task(void)
 	static double lcurvi_old;
 	unsigned char retour = 0;
 	static double old_posi[N]={0};
-	static unsigned char cpt_blocage = 0;
+	static unsigned char cpt_blocage[N] = {0};
 
 	lcurvi   = (real_pos[1] + real_pos[0])/2;
 	vitesse  = lcurvi - lcurvi_old;
@@ -456,7 +456,7 @@ unsigned char Motors_Task(void)
 			for(i=0;i<N;i++)
 				if(fabs(cons_pos[i] - real_pos[i]) > 150)
 				{
-					if(cpt_blocage++>20)
+					if(cpt_blocage[i]++>20)
 					{
 						Stop(FREELY);
 						retour = 0x40;
@@ -465,7 +465,7 @@ unsigned char Motors_Task(void)
 				}
 				else
 				{
-					cpt_blocage =0;
+					cpt_blocage[i] =0;
 				}
 		}	
 		cpt_calage[0]=0;
