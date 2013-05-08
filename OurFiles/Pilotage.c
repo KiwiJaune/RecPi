@@ -175,6 +175,21 @@ Trame Presence_Aspirateur (void)
 	return Etat_Presence_Aspirateur;
 }
 
+Trame Presence_Jack(void)
+{
+	Trame Etat_Jack;
+	static BYTE Jack[3];
+	Etat_Jack.nbChar = 3;
+
+	Jack[0] = 0xC1;
+	Jack[1] = CMD_REPONSE_PRESENCE_JACK;
+	Jack[2] = !PORTAbits.RA8;	
+
+	Etat_Jack.message = Jack;
+
+	return Etat_Jack;
+}
+
 //Fonction commande vitesse Aspirateur/Turbine
 //Value range 1(0.5ms) <--> 4(2.0ms)
 void Aspirateur_Vitesse(unsigned int vitesse)
@@ -902,6 +917,9 @@ Trame AnalyseTrame(Trame t)
 		break;
 		case CMD_ARME_JACK:
 			jackAvant=1;
+		break;
+		case CMD_DEMANDE_PRESENCE_JACK:
+			return Presence_Jack();
 		break;
 	}
 	return retour;

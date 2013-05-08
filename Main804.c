@@ -96,7 +96,7 @@ int main(void)
 	static BYTE Presence[2];
 	Jack.nbChar = 2;
 	Presence[0] = 0xC1;
-	Presence[1] = CMD_REPONSE_PRESENCE_JACK;
+	Presence[1] = CMD_DEPART_JACK;
 	Jack.message = Presence;
 
 	Trame Couleur_Equipe;

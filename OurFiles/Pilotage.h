@@ -159,7 +159,7 @@ Trame AnalyseTrame(Trame t);
 #define CMD_SERVO_VITESSE           	0x61
 
 // Capteurs
-#define CMD_REPONSE_PRESENCE_JACK		0x71
+#define CMD_DEPART_JACK					0x71	
 #define CMD_DEMANDE_COULEUR_EQUIPE		0x72
 #define CMD_REPONSE_COULEUR_EQUIPE		0x73
 #define CMD_DEMANDE_COULEUR				0x75
@@ -181,3 +181,5 @@ Trame AnalyseTrame(Trame t);
 // Diagnostic
 #define	CMD_ECHO						0xF0
 #define	CMD_RESET_CARTE					0xF1
+#define CMD_DEMANDE_PRESENCE_JACK		0xF3
+#define CMD_REPONSE_PRESENCE_JACK		0xF4
