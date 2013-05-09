@@ -426,7 +426,7 @@ unsigned char Motors_Task(void)
 					{
 						motion[i] = 0;
 						speed[i]  = 0;
-						retour = (0x10);
+						if(i==0) retour = (0x10); // 10/05/2013 ajout du if(i==0) 
 					}
 					break;
 
