@@ -130,6 +130,7 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
+
     Init_Timer();	// Initialisation Timer2,Timer4 & Timer5
     
 	InitQEI(); 		// Initialisation des entrées en quadrature

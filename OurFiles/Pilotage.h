@@ -18,6 +18,7 @@ void PilotePIDManual(unsigned int gauche,unsigned int droite);
 void PilotePIDBridage(unsigned int value);
 Trame PilotePIDErreurs(void);
 void PilotePIDFeedforward(unsigned int value);
+void Assiette_Position(unsigned int vitesse);
 
 void PiloteResetAx();
 Trame PilotePositionXYT(void);
