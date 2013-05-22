@@ -239,7 +239,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 	}
 	if(Cpt_Tmr_Periode == CPT_PERIODE_20MS)
 	{
-		SIGNAL_ASSIETTE = RISING_EDGE;
+		//SIGNAL_ASSIETTE = RISING_EDGE;
 		SIGNAL_TURBINE  = RISING_EDGE;
 		SIGNAL_CANON    = RISING_EDGE;
 
