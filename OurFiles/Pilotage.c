@@ -572,36 +572,33 @@ Trame PiloteGetLongPosition()
 	return trame;
 }
 
+// A faire : envoie consigne posiiton brut en pas codeur 2 parametres : [sens]8u ; [pascodeur]16u ;
+
 Trame PiloteGetBuffPosition()
 {
 	Trame trame;
-	static BYTE tableau[211];
-	trame.nbChar = 102;
+	static BYTE tableau[512];
 	unsigned char i,current_send_ptr,nbr_to_send;
 	
-	tableau[0] = 1;
-	tableau[1] = 0x44;
-	tableau[2] = buff_position_ptr;
+	tableau[0] = 0xC1; // identifiant trame
+	tableau[1] = CMD_REPONSE_BUFF_POSITION;
 	nbr_to_send = buff_position_ptr - last_send_ptr;
 	last_send_ptr=buff_position_ptr;
-	if(nbr_to_send>15) nbr_to_send=15;
-	tableau[3] = nbr_to_send;
+	if(nbr_to_send>60) nbr_to_send=60;
+	tableau[2] = nbr_to_send;
 	trame.nbChar = nbr_to_send*8+4;
-	//trame.nbChar = 18;
-	//nbr_to_send=2;
-	//current_send_ptr = buff_position_ptr;
 	for(i=0;i<nbr_to_send;i++)
 	{
 		current_send_ptr = buff_position_ptr-nbr_to_send+i;
-		tableau[2+2+(i*8)] = buff_position[0][current_send_ptr]>>24;
-		tableau[2+3+(i*8)] = buff_position[0][current_send_ptr]>>16;
-		tableau[2+4+(i*8)] = buff_position[0][current_send_ptr]>>8;
-		tableau[2+5+(i*8)] = buff_position[0][current_send_ptr]&0x00FF;
+		tableau[1+2+(i*8)] = buff_position[0][current_send_ptr]>>24;
+		tableau[1+3+(i*8)] = buff_position[0][current_send_ptr]>>16;
+		tableau[1+4+(i*8)] = buff_position[0][current_send_ptr]>>8;
+		tableau[1+5+(i*8)] = buff_position[0][current_send_ptr]&0x00FF;
 		
-		tableau[2+6+(i*8)] = buff_position[1][current_send_ptr]>>24;
-		tableau[2+7+(i*8)] = buff_position[1][current_send_ptr]>>16;
-		tableau[2+8+(i*8)] = buff_position[1][current_send_ptr]>>8;
-		tableau[2+9+(i*8)] = buff_position[1][current_send_ptr]&0x00FF;
+		tableau[1+6+(i*8)] = buff_position[1][current_send_ptr]>>24;
+		tableau[1+7+(i*8)] = buff_position[1][current_send_ptr]>>16;
+		tableau[1+8+(i*8)] = buff_position[1][current_send_ptr]>>8;
+		tableau[1+9+(i*8)] = buff_position[1][current_send_ptr]&0x00FF;
 	}
 	
 	trame.message = tableau;
@@ -921,6 +918,21 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDE_PRESENCE_JACK:
 			return Presence_Jack();
 		break;
+		case CMD_CONSIGNE_POSITION:
+			if(t.message[2] == AVANT)
+			{
+				cons_pos[0] += MM_SCALER * (t.message[3] * 256 + t.message[4]);
+				cons_pos[1] += MM_SCALER * (t.message[3] * 256 + t.message[4]);
+			}
+			else
+			{
+				cons_pos[0] -= MM_SCALER * (t.message[3] * 256 + t.message[4]);
+				cons_pos[1] -= MM_SCALER * (t.message[3] * 256 + t.message[4]);
+			}
+			break;
+		case CMD_DEMANDE_BUFF_POSITION:
+			return PiloteGetBuffPosition();
+			break;
 	}
 	return retour;
 }

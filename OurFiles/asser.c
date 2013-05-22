@@ -179,11 +179,11 @@ void Virage(unsigned char cote, double rayon, double angle, unsigned char wait)
 	//Motors_SetSpeed(fabs(speed_def_ligne * ratio), moteur1); 
 	//Motors_SetSpeed(speed_def_ligne, moteur2);
 	
-	Motors_SetAcceleration(fabs(1000 * ratio), moteur1);  
-	Motors_SetAcceleration(1000, moteur2);
+	Motors_SetAcceleration(fabs(accel_def_ligne * ratio), moteur1);  
+	Motors_SetAcceleration(accel_def_ligne, moteur2);
 	
-	Motors_SetSpeed(fabs(700 * ratio), moteur1); 
-	Motors_SetSpeed(700, moteur2);
+	Motors_SetSpeed(fabs(speed_def_ligne * ratio), moteur1); 
+	Motors_SetSpeed(speed_def_ligne, moteur2);
 	
 	Motors_SetPosition((angle * PI / 180.0) * (rayon - VOIE/2.0),moteur1); 
 	Motors_SetPosition((angle * PI / 180.0) * (rayon + VOIE/2.0),moteur2);
@@ -315,7 +315,7 @@ unsigned char Motors_Task(void)
 	static double speed_max[N],accel_max[N];
 	static double speed[N],accel[N];
 	double delta_x, delta_y, lcurvi, vitesse;
-	static double lcurvi_old;
+	static double lcurvi_old,distance_restante;
 	unsigned char retour = 0;
 	static double old_posi[N]={0};
 	static unsigned char cpt_blocage[N] = {0};
@@ -331,6 +331,20 @@ unsigned char Motors_Task(void)
 	pos_y   += delta_y;
 	lcurvi_old = lcurvi;
 	
+	/* da BIG chantier !
+
+	long position
+
+	calcul(distance_restante);
+	etat = croisiere
+	if(speed_cons<speed_def) etat = accel;
+	if(distance_restante < distance_freingage) etat = decel;
+	if(distance_restante == 0) etat = stabilise
+	*/
+	
+	
+	
+
 	motors_ok=pid(1,cons_pos,real_pos); // 150µs Max
 
 	for(i=0;i<N;i++)
@@ -342,95 +356,104 @@ unsigned char Motors_Task(void)
 				retour = 0x30;
 				return retour;
 			}
-
+/*	for(i=0;i<N;i++) if(motion[i]!=0) // vitesse,position,accel 
+	{
+		distance_restante = speed[i]*speed[i]/(2*accel[i]);
+		motion[i] = 22; // mouvement par défaut
+		if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
+			motion[i] = 21;
+		else if((targ_pos[i]-real_pos[i]) < distance_restante) // faut-il freiner ?
+			motion[i] = 30;
+	}*/
+	
 	for(i=0;i<N;i++) switch(motion[i]) // 10:12 -> Triangulaire | 20:23 -> Trapezoidale
 	{
-		case 0	:	break;
+		case 0	:	// Idle	
+			break; 
+		case 1	:	
+			accel_max[i] = accel_def[i];
+			speed_max[i] = speed_def[i];
+			if(fabs(targ_pos[i]-real_pos[i]) < (speed_max[i]*speed_max[i]/accel_max[i]))  // Triangulaire ou trapezoidale ?
+				motion[i] = 10;
+			else
+				motion[i] = 20;
+			break;
+		case 10	:	// Initiate triangle
+			speed[i] = 0;
+			accel[i] =  accel_max[i];
+			if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
+			else							sens[i] = 0; // Sens négatif
+			decel_point[i] = (targ_pos[i]-real_pos[i])/2+real_pos[i];
+			motion[i]++;
+		case 11	:	// Triangle in progress
+			speed[i] += accel[i] * 0.001;								
+			if(speed[i] > speed_max[i])	speed[i] =  speed_max[i]; // Ne devrais pas arriver, mais on ne sait jamais
+			if( sens[i] && real_pos[i] > decel_point[i]) motion[i] = 23;
+			if(!sens[i] && real_pos[i] < decel_point[i]) motion[i] = 23;
+			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
+			else		cons_pos[i] -= speed[i] * 0.001;
+			break;
+		case 20	:	// Initiate Trapeze
+			speed[i] = 0;
+			accel[i] = accel_max[i];
+			decel_point[i] = 0;
+			origi_point[i] = real_pos[i];
+			if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
+			else							sens[i] = 0; // Sens négatif
+			motion[i]++;
+		case 21 :	// Trapeze in progress
+			speed[i] += accel[i] * 0.001;								
+			if(speed[i] > speed_max[i])	
+			{
+				speed[i] = speed_max[i];
+				decel_point[i] = targ_pos[i]-real_pos[i]+origi_point[i];
+				motion[i]++;
+			}
+			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
+			else		cons_pos[i] -= speed[i] * 0.001;
+			break;
+		case 22	:	// Constant speed
+			if( sens[i] && real_pos[i] > decel_point[i]) motion[i]++;
+			if(!sens[i] && real_pos[i] < decel_point[i]) motion[i]++;
+			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
+			else		cons_pos[i] -= speed[i] * 0.001;
+			break;
+		case 23	:	// Decelerate
+			speed[i] -= accel[i] * 0.001;
+			if(speed[i] < 10)// 50 (07/05/2013)
+			{
+				speed[i]=10; //50	 (07/05/2013)			// Ne devrais pas arriver, mais on ne sait jamais
+				//motion[i] = 24;
+			}
+			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
+			else		cons_pos[i] -= speed[i] * 0.001;
+			if( sens[i] && (cons_pos[i] - targ_pos[i]) >= 0) motion[i] = 24;
+			if(!sens[i] && (cons_pos[i] - targ_pos[i]) <= 0) motion[i] = 24;
 
-		case 1	:	accel_max[i] = accel_def[i];
-					speed_max[i] = speed_def[i];
-					if(fabs(targ_pos[i]-real_pos[i]) < (speed_max[i]*speed_max[i]/accel_max[i]))  // Triangulaire ou trapezoidale ?
-						motion[i] = 10;
-					else
-						motion[i] = 20;
-					break;
-		case 10	:	speed[i] = 0;												// Acceleration triangulaire
-					accel[i] =  accel_max[i];
-					if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
-					else							sens[i] = 0; // Sens négatif
-					decel_point[i] = (targ_pos[i]-real_pos[i])/2+real_pos[i];
-					motion[i]++;
-		case 11	:	speed[i] += accel[i] * 0.001;								
-					if(speed[i] > speed_max[i])	speed[i] =  speed_max[i]; // Ne devrais pas arriver, mais on ne sait jamais
-					if( sens[i] && real_pos[i] > decel_point[i]) motion[i] = 23;
-					if(!sens[i] && real_pos[i] < decel_point[i]) motion[i] = 23;
-					if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-					else		cons_pos[i] -= speed[i] * 0.001;
-					break;
-
-		case 20	:	speed[i] = 0;												// Acceleration trapézoidale
-					accel[i] = accel_max[i];
-					decel_point[i] = 0;
-					origi_point[i] = real_pos[i];
-					if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
-					else							sens[i] = 0; // Sens négatif
-					motion[i]++;
-		case 21 :	speed[i] += accel[i] * 0.001;								
-					if(speed[i] > speed_max[i])	
-					{
-						speed[i] = speed_max[i];
-						decel_point[i] = targ_pos[i]-real_pos[i]+origi_point[i];
-						motion[i]++;
-					}
-					if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-					else		cons_pos[i] -= speed[i] * 0.001;
-					break;
-
-		case 22	:	if( sens[i] && real_pos[i] > decel_point[i]) motion[i]++;	// Croisière
-					if(!sens[i] && real_pos[i] < decel_point[i]) motion[i]++;
-					if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-					else		cons_pos[i] -= speed[i] * 0.001;
-					break;
-
-		case 23	:	speed[i] -= accel[i] * 0.001; 								// Deceleration
-					if(speed[i] < 10)// 50 (07/05/2013)
-						{
-							speed[i]=10; //50	 (07/05/2013)			// Ne devrais pas arriver, mais on ne sait jamais
-							//motion[i] = 24;
-						}
-					if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-					else		cons_pos[i] -= speed[i] * 0.001;
-					if( sens[i] && (cons_pos[i] - targ_pos[i]) >= 0) motion[i] = 24;
-					if(!sens[i] && (cons_pos[i] - targ_pos[i]) <= 0) motion[i] = 24;
-
-					break;
-
-		case 24	:	cons_pos[i] = targ_pos[i]; // On force l'exactitude du deplacement
-					if(i==0 && motion[0] == 24 && motion[1] == 24)
-					{
-						motion[0]=0;//1;
-						motion[1]=0;
-						// Envoi au pc la fin de la trajectoire, seulement si i=0 pour ne pas envoyer 2 fois (un seul moteur)
-						return(0x10);	
-					}
-					break;
-					
-
+			break;
+		case 24	:	// Stopping
+			cons_pos[i] = targ_pos[i]; // On force l'exactitude du deplacement
+			if(i==0 && motion[0] == 24 && motion[1] == 24)
+			{
+				motion[0]=0;//1;
+				motion[1]=0;
+				// Envoi au pc la fin de la trajectoire, seulement si i=0 pour ne pas envoyer 2 fois (un seul moteur)
+				return(0x10);	
+			}
+			break;
 		case 30	:	// Deceleration sur arret imprévu (commande STOP SMOOTH)
-					//if(speed[i] >  MAX_SPEED) speed[i] =  MAX_SPEED; 
-					//if(speed[i] < -MAX_SPEED) speed[i] = -MAX_SPEED;
-					speed[i] -= accel[i] * 0.001;
-					if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-					else		cons_pos[i] -= speed[i] * 0.001;
-					if(speed[i] <= 0) 	
-					{
-						motion[i] = 0;
-						speed[i]  = 0;
-						if(i==0) retour = (0x10); // 10/05/2013 ajout du if(i==0) 
-					}
-					break;
-
-		default :	break;
+			speed[i] -= accel[i] * 0.001;
+			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
+			else		cons_pos[i] -= speed[i] * 0.001;
+			if(speed[i] <= 0) 	
+			{
+				motion[i] = 0;
+				speed[i]  = 0;
+				if(i==0) retour = (0x10); // 10/05/2013 ajout du if(i==0) 
+			}
+			break;
+		default :	
+			break;
 	}
 	
 	if(motiontype==3) // calage

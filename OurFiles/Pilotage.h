@@ -147,6 +147,11 @@ Trame AnalyseTrame(Trame t);
 #define CMD_ENVOI_PID 					0x36
 #define CMD_OFFSETASSERV				0x37
 
+// Debug asservissement
+#define CMD_DEMANDE_BUFF_POSITION		0x43
+#define CMD_REPONSE_BUFF_POSITION		0x44
+#define CMD_CONSIGNE_POSITION			0x45
+
 // Actionneurs
 #define CMD_VITESSE_ASPIRATEUR      	0x53
 #define CMD_VITESSE_CANON           	0x54
