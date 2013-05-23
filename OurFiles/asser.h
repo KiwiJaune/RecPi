@@ -11,8 +11,8 @@
 #define COEFF_ROUE		1.083264470266402		// Coeff d'ajustement pour le diametre de la roue
 #define MM_SCALER		COEFF_ROUE*DIAMETRE_ROUE*PI/(4*CODEUR*REDUCTEUR) // Formule de conversion [pas]<==>[mm]
 #define MM_INVSCALER	4*CODEUR*REDUCTEUR/(COEFF_ROUE*DIAMETRE_ROUE*PI)
-#define DEFAULT_SPEED	700						// Vitesse par défaut en mm/s
-#define DEFAULT_ACCEL	2500					// Acceleration par défaut en mm/s^2
+#define DEFAULT_SPEED	10//700						// Vitesse par défaut en mm/s
+#define DEFAULT_ACCEL	300//2500					// Acceleration par défaut en mm/s^2
 #define ERROR_ALLOWED	0						// En cas de sifflement moteur intempestif (en pas)
 
 

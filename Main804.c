@@ -163,6 +163,14 @@ int main(void)
 	Init_Pompe();
 	Init_Input_Capture();
 	Init_Alimentation();
+	//DelayMs(500);
+	//Avance(10,1);
+	//Avance(10,1);
+	/*DelayMs(500);
+	Motors_SetSpeed(100,MOTEUR_GAUCHE);
+	Motors_SetSpeed(100,MOTEUR_DROIT);
+	*/
+	//while(1);
 	
 	while(1)
   	{		

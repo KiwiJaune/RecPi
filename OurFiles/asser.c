@@ -2,6 +2,8 @@
 #include "asser.h"
 #include <math.h>
 
+unsigned char flag_ligne;
+unsigned char first[N];
 double kp[N],ki[N],kd[N];
 int revolutions[N];
 unsigned char kd_cancel;
@@ -67,6 +69,9 @@ void InitProp(void)
 
 void Avance(double distance, unsigned char wait)
 {
+	flag_ligne=1;
+	first[0]=1;
+	first[1]=1;
 	motiontype = 0; // Avance
 	Motors_SetAcceleration(accel_def_ligne, MOTEUR_GAUCHE);  
 	Motors_SetAcceleration(accel_def_ligne, MOTEUR_DROIT);
@@ -145,6 +150,9 @@ void GotoXY(double x, double y, unsigned char reculer)
 
 void Pivot(double angle,unsigned char wait)
 {
+	first[0]=1;
+	first[1]=1;
+	flag_ligne=0;
 	motiontype = 1;
 	Motors_SetAcceleration(accel_def_pivot, MOTEUR_GAUCHE);  
 	Motors_SetAcceleration(accel_def_pivot, MOTEUR_DROIT);
@@ -167,6 +175,9 @@ void Pivot(double angle,unsigned char wait)
 
 void Virage(unsigned char cote, double rayon, double angle, unsigned char wait)
 {
+	first[0]=1;
+	first[1]=1;
+	flag_ligne=1;
 	motiontype = 2;
 	ratio = (rayon - VOIE/2.0) / (rayon + VOIE/2.0);
 	
@@ -313,7 +324,7 @@ unsigned char Motors_Task(void)
 	static unsigned char sens[N];
 	static double decel_point[N],origi_point[N];
 	static double speed_max[N],accel_max[N];
-	static double speed[N],accel[N];
+	static double speed[N]={0},accel[N];
 	double delta_x, delta_y, lcurvi, vitesse;
 	static double lcurvi_old,distance_restante;
 	unsigned char retour = 0;
@@ -356,15 +367,54 @@ unsigned char Motors_Task(void)
 				retour = 0x30;
 				return retour;
 			}
-/*	for(i=0;i<N;i++) if(motion[i]!=0) // vitesse,position,accel 
+	
+	for(i=0;i<N;i++) 
 	{
-		distance_restante = speed[i]*speed[i]/(2*accel[i]);
-		motion[i] = 22; // mouvement par défaut
-		if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
-			motion[i] = 21;
-		else if((targ_pos[i]-real_pos[i]) < distance_restante) // faut-il freiner ?
-			motion[i] = 30;
-	}*/
+		if(motion[i]!=0) // vitesse,position,accel 
+		{
+			if(flag_ligne)
+			{
+				speed_def[i] = speed_def_ligne;
+				accel_def[i] = accel_def_ligne;
+			}
+			else
+			{
+				speed_def[i] = speed_def_pivot;
+				accel_def[i] = accel_def_pivot;
+			}
+			
+			accel_max[i] = accel_def[i];
+			speed_max[i] = speed_def[i];
+				
+			if(first[i])
+			{	
+				if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
+				else							sens[i] = 0; // Sens négatif
+				first[i]=0;
+			}		
+			accel[i]=accel_max[i];
+			distance_restante = speed[i]*speed[i]/(2*accel[i]);
+			motion[i] = 22; // mouvement par défaut
+			if(sens[i])
+			{
+				if((targ_pos[i]-real_pos[i]) < distance_restante) // faut-il freiner ?
+					motion[i] = 30;				
+				else if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
+					motion[i] = 21;
+				else if(speed[i] > speed_def[i]) 
+					motion[i] = 30;
+			}
+			else
+			{
+				if((real_pos[i]-targ_pos[i]) < distance_restante) // faut-il freiner ?
+					motion[i] = 30;				
+				else if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
+					motion[i] = 21;
+				else if(speed[i] > speed_def[i]) 
+					motion[i] = 30;
+			}
+		}
+	}
 	
 	for(i=0;i<N;i++) switch(motion[i]) // 10:12 -> Triangulaire | 20:23 -> Trapezoidale
 	{
@@ -403,12 +453,12 @@ unsigned char Motors_Task(void)
 			motion[i]++;
 		case 21 :	// Trapeze in progress
 			speed[i] += accel[i] * 0.001;								
-			if(speed[i] > speed_max[i])	
+			/*if(speed[i] > speed_max[i])	
 			{
 				speed[i] = speed_max[i];
 				decel_point[i] = targ_pos[i]-real_pos[i]+origi_point[i];
 				motion[i]++;
-			}
+			}*/
 			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
 			else		cons_pos[i] -= speed[i] * 0.001;
 			break;
