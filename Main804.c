@@ -118,7 +118,7 @@ int main(void)
 	Trame envoiBlocage;
 	static BYTE messblocage[2];
 	messblocage[0] = 0xC1;
-	messblocage[1] = 0x70;
+	messblocage[1] = 0x13;
 	envoiBlocage.message = messblocage;
 	envoiBlocage.nbChar = 2;
 	

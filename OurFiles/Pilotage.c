@@ -683,7 +683,7 @@ int PiloteStop(unsigned char stopmode)
 	messReste[2] = distanceRestante >> 8;
 	messReste[3] = distanceRestante & 0xFF;
 	
-	envoiReste.message = messReste;
+	//envoiReste.message = messReste;
 
 	while(Motors_IsRunning(MOTEUR_GAUCHE) || Motors_IsRunning(MOTEUR_DROIT));
 
