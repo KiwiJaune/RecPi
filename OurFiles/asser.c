@@ -95,6 +95,9 @@ void Avance(double distance, unsigned char wait)
 
 void Calage(unsigned char reculer)
 {
+	flag_ligne=1;
+	first[0]=1;
+	first[1]=1;
 	Motors_SetAcceleration(accel_def_ligne, MOTEUR_GAUCHE);  
 	Motors_SetAcceleration(accel_def_ligne, MOTEUR_DROIT);
 	
@@ -115,12 +118,7 @@ void Calage(unsigned char reculer)
 	
 	Motors_Start(MOTEUR_GAUCHE);
 	Motors_Start(MOTEUR_DROIT);
-	motiontype = 4; // Fake
-	Sleepms(400);
-//	cpt_calage[0]=0;
-//	cpt_calage[1]=0;
-	motiontype = 3; // Calage
-	
+	motiontype = 3;
 }
 
 void GotoXY(double x, double y, unsigned char reculer)
@@ -242,15 +240,18 @@ void Motors_Stop(unsigned char stopmode, unsigned char moteur)
 	switch(stopmode)
 	{
 		case FREELY :	cons_pos[moteur] = real_pos[moteur]; // Commande stop FREELY
+						targ_pos[moteur] = real_pos[moteur]; // Commande stop FREELY
 						motion[moteur] = 0;
 						pid_power = 0;
 						pwm(moteur,0);
 						break;
 		case SMOOTH :	cons_pos[moteur] = real_pos[moteur]; // Commande stop SMOOTH
+						targ_pos[moteur] = real_pos[moteur]; // Commande stop SMOOTH
 						motion[moteur] = 30;
 						pid_power = 1;
 						break;
 		case ABRUPT :	cons_pos[moteur] = real_pos[moteur]; // Commande stop ABRUPT
+						targ_pos[moteur] = real_pos[moteur]; // Commande stop ABRUPT
 						motion[moteur] = 0;
 						pid_power = 1;
 						break;
@@ -358,15 +359,6 @@ unsigned char Motors_Task(void)
 
 	motors_ok=pid(1,cons_pos,real_pos); // 150µs Max
 
-	for(i=0;i<N;i++)
-		if(motion[i] == 11 || motion[i] == 21 || motion[i] == 22)
-			if((cpt_calage[0] > 20) && (cpt_calage[1] > 20) && motiontype ==3) // 50	
-			{
-				motiontype = 0;
-				Stop(ABRUPT);
-				retour = 0x30;
-				return retour;
-			}
 	
 	for(i=0;i<N;i++) 
 	{
@@ -416,6 +408,17 @@ unsigned char Motors_Task(void)
 		}
 	}
 	
+	for(i=0;i<N;i++)
+		if(motion[i] == 11 || motion[i] == 21 || motion[i] == 22)
+			if((cpt_calage[0] > 200) && (cpt_calage[1] > 200) && motiontype ==3) // 50	
+			{
+				motiontype = 0;
+				Stop(ABRUPT);
+				retour = 0x30;
+				return retour;
+			}
+	
+
 	for(i=0;i<N;i++) switch(motion[i]) // 10:12 -> Triangulaire | 20:23 -> Trapezoidale
 	{
 		case 0	:	// Idle	
@@ -510,7 +513,7 @@ unsigned char Motors_Task(void)
 	{
 		for(i=0;i<N;i++)
 		{
-			if(old_posi[i] == real_pos[i])
+			if(fabs(old_posi[i] - real_pos[i])<0.05)
 			{
 				if(cpt_calage[i]<255) 
 					cpt_calage[i]++;
