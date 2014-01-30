@@ -230,18 +230,18 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 	
 	if(Cpt_Tmr_Periode == Periode_Turbine)
 	{
-		SIGNAL_TURBINE = FALLING_EDGE;		
+		//SIGNAL_TURBINE = FALLING_EDGE;		
 	}
 		
 	if(Cpt_Tmr_Periode == Periode_Assiette)
 	{
-		SIGNAL_ASSIETTE = FALLING_EDGE;		
+		//SIGNAL_ASSIETTE = FALLING_EDGE;		
 	}
 	if(Cpt_Tmr_Periode == CPT_PERIODE_20MS)
 	{
 		//SIGNAL_ASSIETTE = RISING_EDGE;
-		SIGNAL_TURBINE  = RISING_EDGE;
-		SIGNAL_CANON    = RISING_EDGE;
+		//SIGNAL_TURBINE  = RISING_EDGE;
+		//SIGNAL_CANON    = RISING_EDGE;
 
 		TMR5 = 0; 					
 		PR5  = Periode_Canon; 			
@@ -258,7 +258,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T5Interrupt(void){
 	T5CONbits.TON = 0;
 	IFS1bits.T5IF = 0; 		//Clear Timer1 Interrupt flag
 
-	SIGNAL_CANON = FALLING_EDGE;
+	//SIGNAL_CANON = FALLING_EDGE;
 }
 
 //Interruption Input Capture

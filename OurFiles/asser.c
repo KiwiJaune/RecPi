@@ -657,32 +657,47 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 	if(value < -4095) value = -4095;	
 	
 
-	if(motor==GAUCHE) value = -value;
+	//if(motor==GAUCHE) value = -value;
+
+	//value = 0;
 
 	switch(motor)
 	{
 		case AVANT:
 		case GAUCHE:	if(value > 0)	// Moteur Gauche
 						{
-							DIRG  = 1;		// Position incremente
-							P1DC2 = (unsigned int)(4095 - value);		
+							PWM1CON1bits.PEN2L = 0;		// PWM1L2 pin is enabled for PWM output
+							PWM1CON1bits.PEN2H = 1;		// PWM1L2 pin is enabled for PWM output							
+							
+							//DIRG  = 1;		// Position incremente
+							P1DC2 = (unsigned int)(value);//+2000);//4095 - value);
 						}
 						else
 						{
-							DIRG  = 0;		// Position decremente
-							P1DC2 = (unsigned int)(4095 + value);		
+							PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
+							PWM1CON1bits.PEN2H = 0;		// PWM1L2 pin is enabled for PWM output							
+							
+							//DIRG  = 0;		// Position decremente
+							value = -value;
+							P1DC2 = (unsigned int)(4095-value);//+2000);//4095 - value);
 						}
 						break;
 		case ARRIERE:
-		case DROITE: 	if(value > 0)	// Moteur Droit
+		case DROITE: 	if(value > 0)	// Moteur Droit // Condition VRAI OK
 						{
-							DIRD  = 1;		// Position incremente
-							P1DC1 = (unsigned int)(4095 - value);		
+							PWM1CON1bits.PEN1L = 0;		// PWM1L1 pin is enabled for PWM output
+							PWM1CON1bits.PEN1H = 1;		// PWM1L1 pin is enabled for PWM output
+							
+							//DIRD  = 1;		// Position incremente
+							P1DC1 = (unsigned int)(value);//+2000);//4095 - value);
 						}
 						else
 						{
-							DIRD  = 0;		// Position decremente
-							P1DC1 = (unsigned int)(4095 + value);		
+							PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
+							PWM1CON1bits.PEN1H = 0;		// PWM1L1 pin is enabled for PWM output
+							//DIRD  = 0;		// Position decremente
+							value = -value;
+							P1DC1 = (unsigned int)(4095-value);//+2000);//4095 - value);
 						}
 						break;
 		default : 		return -1;

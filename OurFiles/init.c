@@ -37,78 +37,96 @@ void InitPorts(void)
 {
 	// Pinout date : 08_04_13
 	// Ports A
-	// 0 | I | RA0  : Coupure alim caméra
-	// 1 | O | RA1  : shutter tuyère
+	// 0 | I | RA0  : 
+	// 1 | I | RA1  : 
 	// 2 | I | RA2  : OSC
-	// 3 | O | RA3  : Coupure_Alim
-	// 4 | I | RA4  : ETH_RST
+	// 3 | I | RA3  : 
+	// 4 | O | RA4  : Ethernet_RST
 	// 5 
 	// 6 
-	// 7 | O | RA7  : capteur couleur
-	// 8 | I | RA8  : Jack
-	// 9 | O | RA9  : ETH_CS
-	// A | O | RA10 : capteur couleur
+	// 7 | I | RA7  : 
+	// 8 | I | RA8  : 
+	// 9 | O | RA9  : Ethernet_CS
+	// A | I | RA10 : 
 	
 	// Ports B
-	// 0 | I | RP0  | RB0  : capteur couleur
-	// 1 | O | RP1  | RB1  : capteur couleur
-	// 2 | O | RP2  | RB2  : DIR_CDS
-	// 3 | I | RP3  | RB3  : codeur_Droit_A
-	// 4 | I | RP4  | RB4  : Interrupteur_Couleur
-	// 5 | I | RP5  | RB5  : PROG_PGD & Capteur présence balle
-	// 6 | I | RP6  | RB6  : PROG_PGC & Switchs assiette
-	// 7 | I | RP7  | RB7  : ETH_INT
-	// 8 | I | RP8  | RB8  : Compteur Tour Canon
-	// 9 | X | RP9  | RB9  : Présence_Aspirateur(I2C_SDA)
-	// A | O | RP10 | RB10 : Pompe à vide
-	// B | O | RP11 | RB11 : Servo assiette
-	// C | O | RP12 | RB12 : Moteur_Gauche_DIR
-	// D | O | RP13 | RB13 : Moteur_Gauche_PWM
-	// E | O | RP14 | RB14 : Moteur_Droit_DIR
-	// F | O | RP15 | RB15 : Moteur_Droit_PWM
+	// 0 | I | RP0  | RB0  : 
+	// 1 | I | RP1  | RB1  : 
+	// 2 | I | RP2  | RB2  : 
+	// 3 | I | RP3  | RB3  : Codeur_Droit_A
+	// 4 | I | RP4  | RB4  : 
+	// 5 | I | RP5  | RB5  :
+	// 6 | I | RP6  | RB6  :
+	// 7 | I | RP7  | RB7  : Ethernet_INT
+	// 8 | I | RP8  | RB8  : 
+	// 9 | I | RP9  | RB9  : 
+	// A | I | RP10 | RB10 : PGD
+	// B | I | RP11 | RB11 : PGC
+	// C | O | RP12 | RB12 : Moteur_Gauche_IN1
+	// D | O | RP13 | RB13 : Moteur_Gauche_IN2
+	// E | O | RP14 | RB14 : Moteur_Droit_IN1
+	// F | O | RP15 | RB15 : Moteur_Droit_IN2
 	
 	// Ports C
 	// 0 | I | RP16 | RC0  : Codeur_Droit_B
 	// 1 | I | RP17 | RC1  : Codeur_Gauche_A
 	// 2 | I | RP18 | RC2  : Codeur_Gauche_B
-	// 3 | O | RP19 | RC3  : Ethernet_SDO1
-	// 4 | O | RP20 | RC4  : Ethernet_SCK1
+	// 3 | O | RP19 | RC3  : Ethernet_SCK1
+	// 4 | O | RP20 | RC4  : Ethernet_SDO1
 	// 5 | I | RP21 | RC5  : Ethernet_SDI1
-	// 6 | O | RP22 | RC6  : Moteur_Canon
-	// 7 | O | RP23 | RC7  : Moteur_Turbine
-	// 8 | I | RP24 | RC8  : CDS_RX
-	// 9 | O | RP25 | RC9  : CDS_TX
+	// 6 | O | RP22 | RC6  : Moteur_Gauche_EN
+	// 7 | O | RP23 | RC7  : Moteur_Droit_EN
+	// 8 | I | RP24 | RC8  : 
+	// 9 | I | RP25 | RC9  : 
 
 	// * : Non utilisé pour le moment, donc configure en entree
-
-	TRISA 	= 0b1111100101110101;
+	LATCbits.LATC6 = 0;
+	LATCbits.LATC7 = 0;
+	
+	TRISA 	= 0b1111110111101111;
 	//          FEDCBA9876543210
-	TRISB 	= 0b0000001111111010;
+	TRISB 	= 0b0000111111111111;
 	//          FEDCBA9876543210
-	TRISC 	= 0b1111111000100111; //Modif de C9 et C8 : Valeur par default C9 = 0;C8 = 1
+	TRISC 	= 0b1111111100100111; 
 	//          FEDCBA9876543210
 	
+	//TRISA 	= 0b1111100101110101;
+	//          FEDCBA9876543210
+	//TRISB 	= 0b0000001111111010;
+	//          FEDCBA9876543210
+	//TRISC 	= 0b1111111000100111; //Modif de C9 et C8 : Valeur par default C9 = 0;C8 = 1
+	//          FEDCBA9876543210
+
 	AD1PCFGL=0xFFFF;	//Tous les ports Analogiques configurés en numérique
 		
-	RPINR16bits.QEA2R = 17;			// CHAd 		<==> RP17  //2013
-	RPINR16bits.QEB2R = 18;			// CHBd			<==> RP18  //2013
-
-	RPINR14bits.QEA1R = 3;			// CHAg			<==> RP3 
-	RPINR14bits.QEB1R = 16;			// CHBg			<==> RP16 
-
-	RPOR10bits.RP20R  = 0b01000;  	// SCK1 <==> RP20 RC4  //23/01/2013
-	RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5  //23/01/2013
-	RPOR9bits.RP19R   = 0b00111;   	// SDO1 <==> RP19 RC3  //23/01/2013
+	RPINR14bits.QEA1R = 3;			// Codeur 1 A (gauche) <==> RP3   //2014
+	RPINR14bits.QEB1R = 16;			// Codeur 1 B (gauche) <==> RP16  //2014
+	RPINR16bits.QEA2R = 17;			// Codeur 2 A (droite) <==> RP17  //2014
+	RPINR16bits.QEB2R = 18;			// Codeur 2 B (droite) <==> RP18  //2014
 	
-	RPOR12bits.RP25R = 0b00011;     //TX RP24
-    RPINR18 = 0b11000;              //RX RP25
-    TRISCbits.TRISC8 = 0;
-    TRISCbits.TRISC9 = 1;
+	//RPINR16bits.QEA2R = 17;			// CHAd 		<==> RP17  //2013
+	//RPINR16bits.QEB2R = 18;			// CHBd			<==> RP18  //2013
 
-	LATAbits.LATA3 = 0; 	// Alimentation OFF
+	//RPINR14bits.QEA1R = 3;			// CHAg			<==> RP3 
+	//RPINR14bits.QEB1R = 16;			// CHBg			<==> RP16 	
+
+	RPOR10bits.RP20R  = 0b00111;  	// SCK1 <==> RP20 RC3 01/11/2013
+	RPOR9bits.RP19R   = 0b01000;   	// SDO1 <==> RP19 RC4 01/11/2013
+	RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5 01/11/2013
+	
+	//RPOR10bits.RP20R  = 0b01000;  // SCK1 <==> RP20 RC4  //23/01/2013
+	//RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5  //23/01/2013
+	//RPOR9bits.RP19R   = 0b00111;  // SDO1 <==> RP19 RC3  //23/01/2013
+	
+	//RPOR12bits.RP25R = 0b00011;     //TX RP24
+    //RPINR18 = 0b11000;              //RX RP25
+    //TRISCbits.TRISC8 = 0;
+    //TRISCbits.TRISC9 = 1;
+
+	//LATAbits.LATA3 = 0; 	// Alimentation OFF
 	
 	//Initialisation du sens de communication pour les AX12
-	LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
+	//LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
 }
 
 void Init_Input_Capture(void)
@@ -213,17 +231,33 @@ void Init_Timer5(void)
 	IFS1bits.T5IF = 0; 		//Clear Timer5 Interrupt Flag
 	IEC1bits.T5IE = 1; 		//Enable Timer5 interrupt
 
-	SIGNAL_CANON    = 0;
-	SIGNAL_TURBINE  = 0;
-	SIGNAL_ASSIETTE = 0;
+	//SIGNAL_CANON    = 0;
+	//SIGNAL_TURBINE  = 0;
+	//SIGNAL_ASSIETTE = 0;
 }
 
 void InitPWM(void)
 {
+	PWM1CON2bits.OSYNC = 1;
+	LATCbits.LATC6 = 0;
+	LATCbits.LATC7 = 0;
+	Sleepms(10);
+	LATCbits.LATC6 = 1;
+	LATCbits.LATC7 = 1;
+	
 	P1TCONbits.PTEN = 1; 		// PWM Time base is On
 	P1TPER = 2000 - 1; 			// 20kHz PWM (2000 counts @40MIPS)
-	PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
-	PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
+	PWM1CON1bits.PEN1L = 0;		// PWM1L1 pin is disabled for PWM output
+	PWM1CON1bits.PEN1H = 0;		// PWM1H1 pin is disabled for PWM output
+	PWM1CON1bits.PEN2L = 0;		// PWM1L2 pin is disabled for PWM output
+	PWM1CON1bits.PEN2H = 0;		// PWM1H2 pin is disabled for PWM output
+	
+	LATBbits.LATB12 = 0;
+	LATBbits.LATB13 = 0;
+	LATBbits.LATB14 = 0;
+	LATBbits.LATB15 = 0;
+	
+	
 
 	P1DC1 = 0xFFFF;				// 0x0000 = 100.00% Power
 	P1DC2 = 0xFFFF;				// 0xFFFF =   0.00% Power
