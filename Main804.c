@@ -20,19 +20,11 @@
 // * Self-placement du robot
 // * Procédure de calibration odométrique auto
 // * Asservissement polaire
-// * Localisation x,y,teta
-// * Navigation x,y,teta
 
-// * Detection blocage, plusieurs pistes :
-//   - On detecte le blocage, on envoi simplement au PC
-//	 - On detecte le blocage, on arrete le moteur (ABRUPT) et on envoi au PC le reste de la distance à parcourir
-//	 - On detecte le blocage, on revient à la position précédente mieux encore avec le magnetoscope
-
-// Configuration Clock Par Mouly
+// Bits configuration
 _FOSCSEL(FNOSC_FRC)
 _FOSC(FCKSM_CSECMD & OSCIOFNC_ON)
 _FPOR(FPWRT_PWR1)
-//_FPOR(FPWRT_PWR1 & HPOL_OFF & LPOL_ON) // 2014
 _FWDT(FWDTEN_OFF)// & SWDTEN_OFF)
 _FICD(ICS_PGD2 & JTAGEN_OFF)
 
@@ -45,7 +37,7 @@ APP_CONFIG AppConfig;
 
 static void InitAppConfig(void);
 
-extern unsigned int ADC_Results[8];
+extern unsigned int ADC_Results[8],cpu_status;
 extern double cons_pos[N];
 extern double real_pos[N];
 extern unsigned char scan;
@@ -131,9 +123,7 @@ int main(void)
 
 	InitClk(); 		// Initialisation de l'horloge
 	InitPorts(); 	// Initialisation des ports E/S
-
     Init_Timer();	// Initialisation Timer2,Timer4 & Timer5
-    
 	InitQEI(); 		// Initialisation des entrées en quadrature
 	InitPWM();		// Configuration du module PWM 
 //	InitADC();
@@ -155,23 +145,13 @@ int main(void)
  	UDPPerformanceTask();
 	InitUserUdp();
 	
-	// Interrupt Priority
 	Init_Interrupt_Priority();							
-	
 	InitUART2();	
 	Init_Turbine(); 
 	Init_Servos();
 	Init_Pompe();
 	Init_Input_Capture();
 	Init_Alimentation();
-	//DelayMs(500);
-	//Avance(10,1);
-	//Avance(10,1);
-	/*DelayMs(500);
-	Motors_SetSpeed(100,MOTEUR_GAUCHE);
-	Motors_SetSpeed(100,MOTEUR_DROIT);
-	*/
-	//while(1);
 	
 	while(1)
   	{		
@@ -486,8 +466,7 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 	}
 	
 	
-	PID_ressource_used = (TMR4); //Previous value TMR4
-
+	
 	Cpt_Tmr2_Capteur_Couleur++;
 
 	if(Cpt_Tmr2_Capteur_Couleur == 20)
@@ -547,5 +526,6 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 			break;
 		}
 	}
+	cpu_status = (TMR4); //Previous value TMR4
 	IFS1bits.T4IF = 0;
 }

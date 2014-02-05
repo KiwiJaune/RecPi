@@ -7,8 +7,10 @@
 
 Trame PiloteGotoXY(int x, int y, unsigned char x_negatif, unsigned char y_negatif);
 
+Trame StatusMonitor(void);
+
 Trame PilotePIDRessource();
-void PilotPIDInit(void);
+void PilotePIDInit(void);
 Trame PiloteGetPosition(unsigned char cote);
 Trame PiloteGetRawPosition(void);
 Trame PiloteGetLongPosition(void);
@@ -152,6 +154,8 @@ Trame AnalyseTrame(Trame t);
 #define CMD_DEMANDE_BUFF_POSITION		0x43
 #define CMD_REPONSE_BUFF_POSITION		0x44
 #define CMD_CONSIGNE_POSITION			0x45
+#define CMD_DEMANDE_BUFF_STATUS			0x46
+#define CMD_REPONSE_BUFF_STATUS			0x47
 
 // Actionneurs
 #define CMD_VITESSE_ASPIRATEUR      	0x53

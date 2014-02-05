@@ -16,6 +16,8 @@ extern unsigned int ADC_Results[8];
 extern unsigned int position_buffer[6];
 extern unsigned char buff_position_ptr,last_send_ptr;
 extern long buff_position[N][256];
+extern unsigned char buff_status_ptr,last_send_status_ptr;
+extern unsigned int buff_status[3][64];
 extern long raw_position[2];
 double BAUDRATE, BRGVAL, FCY = 40000000;
 extern double bridage;
@@ -310,7 +312,50 @@ Trame PiloteGotoXY(int x,int y, unsigned char x_negatif, unsigned char y_negatif
 	
 }
 
-void PilotPIDInit(void)
+Trame StatusMonitor(void)
+{
+	Trame trame;
+	static BYTE tableau[512];
+	unsigned char i,current_send_ptr,nbr_to_send;
+	
+	tableau[0] = 0xC1; // identifiant trame
+	tableau[1] = CMD_REPONSE_BUFF_STATUS;
+
+	
+
+	if(buff_status_ptr > last_send_status_ptr)
+		nbr_to_send = buff_status_ptr - last_send_status_ptr;
+	else
+		nbr_to_send = 64 - last_send_status_ptr + buff_status_ptr;
+
+	//nbr_to_send = (buff_status_ptr - last_send_status_ptr)%64;
+
+
+	last_send_status_ptr=buff_status_ptr;
+	if(nbr_to_send>35) nbr_to_send=35;
+	tableau[2] = nbr_to_send;
+	trame.nbChar = nbr_to_send*6+4;
+
+	current_send_ptr = last_send_status_ptr + 1;
+
+	for(i=0;i<nbr_to_send;i++)
+	{
+		tableau[1+2+(i*6)] = buff_status[0][current_send_ptr]>>8; // Status
+		tableau[1+3+(i*6)] = buff_status[0][current_send_ptr]&0x00FF;		
+		tableau[1+4+(i*6)] = buff_status[1][current_send_ptr]>>8; // PWM gauche
+		tableau[1+5+(i*6)] = buff_status[1][current_send_ptr]&0x00FF;
+		tableau[1+6+(i*6)] = buff_status[2][current_send_ptr]>>8; // PWM droite
+		tableau[1+7+(i*6)] = buff_status[2][current_send_ptr]&0x00FF;
+		current_send_ptr = (current_send_ptr + 1)%64;
+	}
+	
+	trame.message = tableau;
+	
+	return trame;
+}
+
+
+void PilotePIDInit(void)
 {
 	InitProp();
 }
@@ -526,7 +571,7 @@ Trame PiloteGetRawPosition()
 	trame.nbChar = 15;
 	
 	tableau[0] = 1;
-	tableau[1] = 0x43;
+	tableau[1] = CMD_DEMANDE_BUFF_POSITION;
 	tableau[2] = 0;
 	
 
@@ -933,6 +978,10 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDE_BUFF_POSITION:
 			return PiloteGetBuffPosition();
 			break;
+		case CMD_DEMANDE_BUFF_STATUS:
+			return StatusMonitor();
+			break;
+	
 	}
 	return retour;
 }

@@ -12,6 +12,9 @@ double cons_pos[N]={0};
 long raw_position[N];
 long buff_position[N][256];
 unsigned char buff_position_ptr=0,last_send_ptr=0;
+unsigned char buff_status_ptr=0,last_send_status_ptr=0;
+unsigned int buff_status[3][64];
+unsigned int cpu_status;
 double real_pos[N];
 double targ_pos[N];
 double erreur_allowed=2;
@@ -635,8 +638,16 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 			erreur_old[i] = erreur[i]; // Mise a jour necessaire pour le terme derive
 			pwm_cor[i] = cor[i];
 		}
-		pwm(GAUCHE,cor[0]); // a dequote (test)
-		pwm(DROITE,cor[1]); // a dequote (test)
+		pwm(GAUCHE,cor[0]);
+		pwm(DROITE,cor[1]);
+		cor[0] = fabs(cor[0]);
+		cor[1] = fabs(cor[1]);
+		if(cor[0]>4000) cor[0]=4000;
+		if(cor[1]>4000) cor[1]=4000;
+		buff_status[0][buff_status_ptr]   = cpu_status;
+		buff_status[1][buff_status_ptr]   = (int) (cor[0]);
+		buff_status[2][buff_status_ptr++] = (int) (cor[1]);
+		if(buff_status_ptr>63) buff_status_ptr=0;
 	}
 	return fabs(cor[0]) + fabs(cor[1]);
 }
@@ -659,11 +670,6 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 	if(value >  4095) value =  4095;
 	if(value < -4095) value = -4095;	
 	
-
-	//if(motor==GAUCHE) value = -value;
-
-	//value = 0;
-
 	switch(motor)
 	{
 		case AVANT:
@@ -671,16 +677,12 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 						{
 							PWM1CON1bits.PEN2L = 0;		// PWM1L2 pin is enabled for PWM output
 							PWM1CON1bits.PEN2H = 1;		// PWM1L2 pin is enabled for PWM output							
-							
-							//DIRG  = 1;		// Position incremente
 							P1DC2 = (unsigned int)(value);//+2000);//4095 - value);
 						}
 						else
 						{
 							PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
 							PWM1CON1bits.PEN2H = 0;		// PWM1L2 pin is enabled for PWM output							
-							
-							//DIRG  = 0;		// Position decremente
 							value = -value;
 							P1DC2 = (unsigned int)(4095-value);//+2000);//4095 - value);
 						}
@@ -690,15 +692,12 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 						{
 							PWM1CON1bits.PEN1L = 0;		// PWM1L1 pin is enabled for PWM output
 							PWM1CON1bits.PEN1H = 1;		// PWM1L1 pin is enabled for PWM output
-							
-							//DIRD  = 1;		// Position incremente
 							P1DC1 = (unsigned int)(value);//+2000);//4095 - value);
 						}
 						else
 						{
 							PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
 							PWM1CON1bits.PEN1H = 0;		// PWM1L1 pin is enabled for PWM output
-							//DIRD  = 0;		// Position decremente
 							value = -value;
 							P1DC1 = (unsigned int)(4095-value);//+2000);//4095 - value);
 						}
