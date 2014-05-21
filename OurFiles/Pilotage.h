@@ -6,7 +6,7 @@
 
 
 Trame PiloteGotoXY(int x, int y, unsigned char x_negatif, unsigned char y_negatif);
-
+Trame ReponseEcho(void);
 Trame StatusMonitor(void);
 
 Trame PilotePIDRessource();
@@ -17,7 +17,6 @@ Trame PiloteGetLongPosition(void);
 Trame PiloteGetBuffPosition(void);
 void PilotePIDCoeffs(unsigned int new_kp, unsigned int new_ki, unsigned int new_kd);
 void PilotePIDManual(unsigned int gauche,unsigned int droite);
-void PilotePIDBridage(unsigned int value);
 Trame PilotePIDErreurs(void);
 void PilotePIDFeedforward(unsigned int value);
 void Assiette_Position(unsigned int vitesse);
@@ -125,6 +124,18 @@ int PiloteAvancerEtapes(int nombreEtapes, Etape etape);
 int PiloteValiderEtapes(int numEtape);
 int PiloteOffsetAsserv(int x, int y, int teta);
 
+// DEBUG
+Trame PiloteDebug0(Trame t);
+Trame PiloteDebug1(Trame t);
+Trame PiloteDebug2(Trame t);
+Trame PiloteDebug3(Trame t);
+Trame PiloteDebug4(Trame t);
+Trame PiloteDebug5(Trame t);
+Trame PiloteDebug6(Trame t);
+Trame PiloteDebug7(Trame t);
+Trame PiloteDebug8(Trame t);
+Trame PiloteDebug9(Trame t);
+
 //Analyse Trame
 Trame AnalyseTrame(Trame t);
 
@@ -156,6 +167,7 @@ Trame AnalyseTrame(Trame t);
 #define CMD_CONSIGNE_POSITION			0x45
 #define CMD_DEMANDE_BUFF_STATUS			0x46
 #define CMD_REPONSE_BUFF_STATUS			0x47
+#define CMD_PRD_ENVOI_POSITION			0x48
 
 // Actionneurs
 #define CMD_VITESSE_ASPIRATEUR      	0x53
@@ -189,6 +201,7 @@ Trame AnalyseTrame(Trame t);
 #define CMD_ALIMENTATION_CAMERA 0x81	
 
 // Diagnostic
+#define	CMD_DEBUG						0xEE
 #define	CMD_ECHO						0xF0
 #define	CMD_RESET_CARTE					0xF1
 #define CMD_DEMANDE_PRESENCE_JACK		0xF3

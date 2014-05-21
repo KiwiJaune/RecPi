@@ -6,6 +6,8 @@
 #include "CDS5516.h"
 
 // ATTENTION /!\ Ces fonctions ne doivent pas être bloquantes
+extern unsigned char bridage;
+extern unsigned int prd_envoi_position;
 extern unsigned char jackAvant;
 extern unsigned int capteur_vitesse;
 extern unsigned char desactive_interrupt;
@@ -20,7 +22,6 @@ extern unsigned char buff_status_ptr,last_send_status_ptr;
 extern unsigned int buff_status[3][64];
 extern long raw_position[2];
 double BAUDRATE, BRGVAL, FCY = 40000000;
-extern double bridage;
 extern double erreur[N];
 extern double targ_pos[N];
 extern double real_pos[N];
@@ -76,6 +77,59 @@ void delays(void)
 	long i = 4000000; //seconde
     while(i--);
 }
+
+// DEBUG
+
+Trame PiloteDebug0(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug1(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug2(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug3(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug4(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug5(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug6(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug7(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug8(Trame t)
+{
+	return t;
+}
+
+Trame PiloteDebug9(Trame t)
+{
+	return t;
+}
+
 
 //Initialisation des servos moteurs selon les positions suivantes: 
 //Aspirateur/Turbine : Desactive
@@ -136,7 +190,7 @@ Trame Couleur_Equipe(void)
 	static BYTE Couleur[3];
 	Etat_Couleur_Equipe.nbChar = 3;
 
-	Couleur[0] = 0xC1;
+	Couleur[0] = 0xC3;
 	Couleur[1] = CMD_REPONSE_COULEUR_EQUIPE;
 	Couleur[2] = PORTBbits.RB4;
 
@@ -152,7 +206,7 @@ Trame Presence_Assiette(void)
 	static BYTE Presence[3];
 	Etat_Presence_Assiette.nbChar = 3;
 
-	Presence[0] = 0xC1;
+	Presence[0] = 0xC3;
 	Presence[1] = CMD_REPONSE_PRESENCE_ASSIETTE;
 	Presence[2] = !PORTBbits.RB6;
 
@@ -168,7 +222,7 @@ Trame Presence_Aspirateur (void)
 	static BYTE Presence[3];
 	Etat_Presence_Aspirateur.nbChar = 3;
 
-	Presence[0] = 0xC1;
+	Presence[0] = 0xC3;
 	Presence[1] = CMD_REPONSE_PRESENCE_ASPIRATEUR;
 	Presence[2] = !PORTBbits.RB9;
 
@@ -183,7 +237,7 @@ Trame Presence_Jack(void)
 	static BYTE Jack[3];
 	Etat_Jack.nbChar = 3;
 
-	Jack[0] = 0xC1;
+	Jack[0] = 0xC3;
 	Jack[1] = CMD_REPONSE_PRESENCE_JACK;
 	Jack[2] = !PORTAbits.RA8;	
 
@@ -318,7 +372,7 @@ Trame StatusMonitor(void)
 	static BYTE tableau[512];
 	unsigned char i,current_send_ptr,nbr_to_send;
 	
-	tableau[0] = 0xC1; // identifiant trame
+	tableau[0] = 0xC3; // identifiant trame
 	tableau[1] = CMD_REPONSE_BUFF_STATUS;
 
 	
@@ -368,7 +422,7 @@ Trame PilotePositionXYT()
 	static BYTE tableau[8];
 	trame.nbChar = 8;
 	
-	tableau[0] = 0xC1;
+	tableau[0] = 0xC3;
 	tableau[1] = CMD_RETOURPOSITION;
 	tableau[2] = (int)(pos_x * 10)>>8;
 	tableau[3] = (int)(pos_x * 10)&0x00FF;
@@ -388,7 +442,7 @@ Trame PiloteMesureCanon()
 	static BYTE tableau[4];
 	trame.nbChar = 4;
 	
-	tableau[0] = 0xC1;
+	tableau[0] = 0xC3;
 	tableau[1] = CMD_REPONSE_MESURE_CANON;
 	tableau[2] = (unsigned int)vitesse_canon>>8;
 	tableau[3] = (unsigned int)vitesse_canon&0x00FF;
@@ -418,13 +472,27 @@ Trame Presence_Balle(void)
 	static BYTE Presence[3];
 	Etat_Presence_Balle.nbChar = 3;
 
-	Presence[0] = 0xC1;
+	Presence[0] = 0xC3;
 	Presence[1] = CMD_REPONSE_PRESENCE_BALLE;
 	Presence[2] = !PORTBbits.RB5;
 
 	Etat_Presence_Balle.message = Presence;
 	
 	return Etat_Presence_Balle;
+}
+
+Trame ReponseEcho()
+{
+	static Trame trame;
+	static BYTE tableau[2];
+	trame.nbChar = 2;
+
+	tableau[0] = 0xC3;
+	tableau[1] = 0xF5;
+	
+	trame.message = tableau;
+	
+	return trame;
 }
 
 unsigned int Send_Variable_Capteur_Couleur(void){
@@ -438,7 +506,7 @@ Trame Couleur_Balle(void)
 	static BYTE Couleur[18];
 	Couleur_Balle.nbChar = 18;
 
-	Couleur[0] = 0xC1;
+	Couleur[0] = 0xC3;
 	Couleur[1] = CMD_REPONSE_COULEUR_BALLE;
 
 	Couleur[2] = Tab_Capteur_Couleur[0]>>8;
@@ -476,10 +544,6 @@ void PilotePIDManual(unsigned int gauche,unsigned int droite)
 	manual_pid((double)gauche,(double)droite);
 }
 
-void PilotePIDBridage(unsigned int value)
-{
-	bridage = (double)value;
-}
 
 void PilotePIDFeedforward(unsigned int value)
 {
@@ -625,7 +689,7 @@ Trame PiloteGetBuffPosition()
 	static BYTE tableau[512];
 	unsigned char i,current_send_ptr,nbr_to_send;
 	
-	tableau[0] = 0xC1; // identifiant trame
+	tableau[0] = 0xC3; // identifiant trame
 	tableau[1] = CMD_REPONSE_BUFF_POSITION;
 	nbr_to_send = buff_position_ptr - last_send_ptr;
 	last_send_ptr=buff_position_ptr;
@@ -716,23 +780,19 @@ int PiloteVirage(unsigned char reculer, unsigned char direction, double rayon, d
 // mode : mode de stop (Abrupt, Smooth, Freely)
 int PiloteStop(unsigned char stopmode)
 {
-	int distanceRestante;
+	/*int distanceRestante;
 	Trame envoiReste;
 	static BYTE messReste[2];
-	messReste[0] = 0xC1;
+	messReste[0] = 0xC3;
 	messReste[1] = 0x60;
 	envoiReste.nbChar = 4;
-	
-	distanceRestante = (int)Stop(stopmode);	
+	*/
+	Stop(stopmode);	
 
-	messReste[2] = distanceRestante >> 8;
-	messReste[3] = distanceRestante & 0xFF;
-	
 	//envoiReste.message = messReste;
 
-	while(Motors_IsRunning(MOTEUR_GAUCHE) || Motors_IsRunning(MOTEUR_DROIT));
+	//while(Motors_IsRunning(MOTEUR_GAUCHE) || Motors_IsRunning(MOTEUR_DROIT));
 
-	EnvoiUserUdp(envoiReste);
 	
 	return 1;
 }
@@ -758,9 +818,11 @@ int PiloteAvancerEtapes(int nombreEtapes, Etape etape)
 
 int PiloteOffsetAsserv(int x, int y, int teta)
 {
+	double toto;
 	pos_x = -y;
 	pos_y = -x;
-	offset_teta = (teta/180*PI) / 100.0 - pos_teta;
+	toto = (((double)teta)/180*PI) / 100.0;
+	offset_teta = toto - pos_teta + offset_teta;
 
 	return 1;
 }
@@ -774,12 +836,49 @@ Trame AnalyseTrame(Trame t)
 	
 	retour = t;
 
-	// Les messages ne commencant pas par 0xC1 ne nous sont pas adressés (RecMove)
-	if(t.message[0] != 0xC1)
+	// Les messages ne commencant pas par 0xC3 ne nous sont pas adressés (RecMove)
+	if(t.message[0] != 0xC3)
 		return t;
 
 	switch(t.message[1])
 	{
+		case CMD_DEBUG:
+			param1 = t.message[3];							// Numero
+			switch(param1)
+			{
+				case 0:
+					retour = PiloteDebug0(t);
+					break;
+				case 1:
+					retour = PiloteDebug1(t);
+					break;
+				case 2:
+					retour = PiloteDebug2(t);
+					break;
+				case 3:
+					retour = PiloteDebug3(t);
+					break;
+				case 4:
+					retour = PiloteDebug4(t);
+					break;
+				case 5:
+					retour = PiloteDebug5(t);
+					break;
+				case 6:
+					retour = PiloteDebug6(t);
+					break;
+				case 7:
+					retour = PiloteDebug7(t);
+					break;
+				case 8:
+					retour = PiloteDebug8(t);
+					break;
+				case 9:
+					retour = PiloteDebug9(t);
+					break;
+			}
+		break;
+		
 		case CMD_AVANCER:
 			param1 = t.message[3] * 256 + t.message[4];		// Distance
 			if(t.message[2])								// Sens
@@ -847,7 +946,8 @@ Trame AnalyseTrame(Trame t)
 		break;
 
 		case CMD_ECHO:
-			retour = t;
+			//bridage = t.message[2];
+			retour = ReponseEcho();
 		break;
 
 		case CMD_ALIMENTATION:
@@ -981,7 +1081,9 @@ Trame AnalyseTrame(Trame t)
 		case CMD_DEMANDE_BUFF_STATUS:
 			return StatusMonitor();
 			break;
-	
+		case CMD_PRD_ENVOI_POSITION:
+			prd_envoi_position = 10*(unsigned int)t.message[2];
+			break;
 	}
 	return retour;
 }

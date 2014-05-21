@@ -2,17 +2,17 @@
 #define N				2						// Nombre de moteurs
 #define DEFAULT_KP		20						// Coefficient proporionnel 
 #define DEFAULT_KI		0						// Coefficient integral (inverse !)
-#define DEFAULT_KD		300						// Coefficient derive
+#define DEFAULT_KD		100						// Coefficient derive
 #define CODEUR			1024 					// Nombre de pas par tour moteur (sans le ratio x4)
 #define REDUCTEUR		1						// Reducteur utilise en sortie d'arbre moteur (=1 si roue codeuse indépendante)
-#define DIAMETRE_ROUE 	35						// Diametre de la roue motrice (ou roue codeuse si indépendante) en mm 
+#define DIAMETRE_ROUE 	54						// Diametre de la roue motrice (ou roue codeuse si indépendante) en mm 
 #define PI 				3.1415926535897932384	// Ben pi quoi
-#define VOIE			266.803737617175 		// Distance entre les deux roues en mm
-#define COEFF_ROUE		1.083264470266402		// Coeff d'ajustement pour le diametre de la roue
+#define VOIE			190 			// Distance entre les deux roues en mm
+#define COEFF_ROUE		1.000000				// Coeff d'ajustement pour le diametre de la roue
 #define MM_SCALER		COEFF_ROUE*DIAMETRE_ROUE*PI/(4*CODEUR*REDUCTEUR) // Formule de conversion [pas]<==>[mm]
 #define MM_INVSCALER	4*CODEUR*REDUCTEUR/(COEFF_ROUE*DIAMETRE_ROUE*PI)
-#define DEFAULT_SPEED	10//700						// Vitesse par défaut en mm/s
-#define DEFAULT_ACCEL	300//2500					// Acceleration par défaut en mm/s^2
+#define DEFAULT_SPEED	500						// Vitesse par défaut en mm/s
+#define DEFAULT_ACCEL	500					// Acceleration par défaut en mm/s^2
 #define ERROR_ALLOWED	0						// En cas de sifflement moteur intempestif (en pas)
 
 
@@ -52,6 +52,18 @@
 #define FREELY			0
 #define SMOOTH			1
 #define ABRUPT			2
+
+#define MOTION_ACCEL	21
+#define MOTION_DECEL	30
+#define MOTION_RUN		22
+#define MOTION_STOP		0
+#define MOTION_OFF		0
+#define MOTION_START	1
+
+#define FLAG_ENVOI		0x10
+#define FLAG_CALAGE		0x30
+#define FLAG_BLOCAGE	0x40
+
 
 unsigned char Motors_Task(void);
 void manual_pid(double moteurga, double moteurdr);

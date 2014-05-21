@@ -2,6 +2,11 @@
 #include "asser.h"
 #include <math.h>
 
+#define MOYENNE_GLISSANTE_CORRECTEUR 3
+
+static double speed[N]={0},accel[N];
+double cor_moy[N][MOYENNE_GLISSANTE_CORRECTEUR];
+unsigned char cpt_sature[N],bridage=0,ptr_cor_moy[N];	
 unsigned char flag_ligne;
 unsigned char first[N];
 double kp[N],ki[N],kd[N];
@@ -21,7 +26,7 @@ double erreur_allowed=2;
 double erreur[N],pwm_cor[N];
 double feedforward=0;//825;
 unsigned int position_buffer[6];
-double bridage=0,xydistance,xyangle;
+double xydistance,xyangle;
 unsigned char xymotion=0;
 double pos_x,pos_y,pos_teta, offset_teta = 0;
 double ratio;
@@ -91,7 +96,6 @@ void Avance(double distance, unsigned char wait)
 	if(wait) 
 	{
 		while(Motors_IsRunning(MOTEUR_GAUCHE) || Motors_IsRunning(MOTEUR_DROIT));
-		Sleepms(100);
 	}
 
 }
@@ -170,7 +174,6 @@ void Pivot(double angle,unsigned char wait)
 	if(wait) 
 	{
 		while(Motors_IsRunning(MOTEUR_GAUCHE) || Motors_IsRunning(MOTEUR_DROIT));
-		Sleepms(100);
 	}
 }
 
@@ -211,10 +214,7 @@ double Stop(unsigned char stopmode)
 {
 	Motors_Stop(stopmode,MOTEUR_GAUCHE);
 	Motors_Stop(stopmode,MOTEUR_DROIT);
-
-	while(Motors_IsRunning(MOTEUR_GAUCHE) || Motors_IsRunning(MOTEUR_DROIT));
-
-	return fabs((targ_pos[0]-real_pos[0]+targ_pos[1]-real_pos[1])/2);
+	return 1;
 }
 
 
@@ -240,7 +240,24 @@ void Motors_DefineHome(unsigned char moteur)
 
 void Motors_Stop(unsigned char stopmode, unsigned char moteur)
 {
-	switch(stopmode)
+	unsigned char stopmode_used;
+	stopmode_used = stopmode;
+	if(stopmode == SMOOTH && pid_power == 0) // Derogation, on force un dual abrupt dans ce cas la
+	{
+		stopmode_used = ABRUPT;
+		speed[0]  = 0;
+		accel[0]  = 0;
+		speed[1]  = 0;
+		accel[1]  = 0;
+		motion[0] = 0;
+		motion[1] = 0;
+		cons_pos[0] = real_pos[0];  
+		targ_pos[0] = real_pos[0];  
+		cons_pos[1] = real_pos[1];  
+		targ_pos[1] = real_pos[1]; 
+	}
+
+	switch(stopmode_used)
 	{
 		case FREELY :	cons_pos[moteur] = real_pos[moteur]; // Commande stop FREELY
 						targ_pos[moteur] = real_pos[moteur]; // Commande stop FREELY
@@ -250,13 +267,13 @@ void Motors_Stop(unsigned char stopmode, unsigned char moteur)
 						break;
 		case SMOOTH :	cons_pos[moteur] = real_pos[moteur]; // Commande stop SMOOTH
 						targ_pos[moteur] = real_pos[moteur]; // Commande stop SMOOTH
-						motion[moteur] = 30;
+						if(motion[moteur]!=0) motion[moteur] = 30;
 						pid_power = 1;
 						break;
 		case ABRUPT :	cons_pos[moteur] = real_pos[moteur]; // Commande stop ABRUPT
 						targ_pos[moteur] = real_pos[moteur]; // Commande stop ABRUPT
 						motion[moteur] = 0;
-						pid_power = 1;
+						pid_power = 1;						
 						break;
 		default :		break;
 	}
@@ -316,7 +333,7 @@ void Motors_Power(unsigned char power)
 
 void Motors_Start(unsigned char moteur)
 {
-	motion[moteur] = 1;
+	motion[moteur] = MOTION_START;
 }
 
 /*************************** Couche basse ***************************/
@@ -328,11 +345,9 @@ unsigned char Motors_Task(void)
 	static unsigned char sens[N];
 	static double decel_point[N],origi_point[N];
 	static double speed_max[N],accel_max[N];
-	static double speed[N]={0},accel[N];
 	double delta_x, delta_y, lcurvi, vitesse;
 	static double lcurvi_old,distance_restante;
 	unsigned char retour = 0;
-	static double old_posi[N]={0};
 	static unsigned char cpt_blocage[N] = {0};
 
 	lcurvi   = (real_pos[1] + real_pos[0])/2;
@@ -346,26 +361,11 @@ unsigned char Motors_Task(void)
 	pos_y   += delta_y;
 	lcurvi_old = lcurvi;
 	
-	/* da BIG chantier !
-
-	long position
-
-	calcul(distance_restante);
-	etat = croisiere
-	if(speed_cons<speed_def) etat = accel;
-	if(distance_restante < distance_freingage) etat = decel;
-	if(distance_restante == 0) etat = stabilise
-	*/
-	
-	
-	
-
 	motors_ok=pid(1,cons_pos,real_pos); // 150µs Max
 
-	
 	for(i=0;i<N;i++) 
 	{
-		if(motion[i]!=0) // vitesse,position,accel 
+		if(motion[i]!=MOTION_STOP) // vitesse,position,accel 
 		{
 			if(flag_ligne)
 			{
@@ -389,115 +389,57 @@ unsigned char Motors_Task(void)
 			}		
 			accel[i]=accel_max[i];
 			distance_restante = speed[i]*speed[i]/(2*accel[i]);
-			motion[i] = 22; // mouvement par défaut
+			motion[i] = MOTION_RUN; // mouvement par défaut
 			if(sens[i])
 			{
 				if((targ_pos[i]-real_pos[i]) < distance_restante) // faut-il freiner ?
-					motion[i] = 30;				
+					motion[i] = MOTION_DECEL;				
 				else if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
-					motion[i] = 21;
+					motion[i] = MOTION_ACCEL;
 				else if(speed[i] > speed_def[i]) 
-					motion[i] = 30;
+					motion[i] = MOTION_DECEL;
 			}
 			else
 			{
 				if((real_pos[i]-targ_pos[i]) < distance_restante) // faut-il freiner ?
-					motion[i] = 30;				
+					motion[i] = MOTION_DECEL;				
 				else if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
-					motion[i] = 21;
+					motion[i] = MOTION_ACCEL;
 				else if(speed[i] > speed_def[i]) 
-					motion[i] = 30;
+					motion[i] = MOTION_DECEL;
 			}
 		}
 	}
 	
-	for(i=0;i<N;i++)
-		if(motion[i] == 11 || motion[i] == 21 || motion[i] == 22)
-			if((cpt_calage[0] > 200) && (cpt_calage[1] > 200) && motiontype ==3) // 50	
-			{
-				motiontype = 0;
-				Stop(ABRUPT);
-				retour = 0x30;
-				return retour;
-			}
+	if((cpt_calage[0] > 200) && (cpt_calage[1] > 200) && motiontype == 3)
+	//if((cpt_sature[0] > 10) && (cpt_sature[1] > 3) && motiontype == 3)
+	{
+		motiontype = 0;
+		cpt_calage[0] = 0;
+		cpt_calage[1] = 0;
+		Stop(ABRUPT);
+		retour = FLAG_CALAGE;
+		return retour;
+	}
 	
 
 	for(i=0;i<N;i++) switch(motion[i]) // 10:12 -> Triangulaire | 20:23 -> Trapezoidale
 	{
 		case 0	:	// Idle	
+			speed[i]  = 0;		
 			break; 
-		case 1	:	
-			accel_max[i] = accel_def[i];
-			speed_max[i] = speed_def[i];
-			if(fabs(targ_pos[i]-real_pos[i]) < (speed_max[i]*speed_max[i]/accel_max[i]))  // Triangulaire ou trapezoidale ?
-				motion[i] = 10;
-			else
-				motion[i] = 20;
-			break;
-		case 10	:	// Initiate triangle
-			speed[i] = 0;
-			accel[i] =  accel_max[i];
-			if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
-			else							sens[i] = 0; // Sens négatif
-			decel_point[i] = (targ_pos[i]-real_pos[i])/2+real_pos[i];
-			motion[i]++;
-		case 11	:	// Triangle in progress
+		case MOTION_ACCEL :	// Trapeze in progress
 			speed[i] += accel[i] * 0.001;								
-			if(speed[i] > speed_max[i])	speed[i] =  speed_max[i]; // Ne devrais pas arriver, mais on ne sait jamais
-			if( sens[i] && real_pos[i] > decel_point[i]) motion[i] = 23;
-			if(!sens[i] && real_pos[i] < decel_point[i]) motion[i] = 23;
 			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
 			else		cons_pos[i] -= speed[i] * 0.001;
 			break;
-		case 20	:	// Initiate Trapeze
-			speed[i] = 0;
-			accel[i] = accel_max[i];
-			decel_point[i] = 0;
-			origi_point[i] = real_pos[i];
-			if(targ_pos[i] > real_pos[i])	sens[i] = 1; // Sens positif
-			else							sens[i] = 0; // Sens négatif
-			motion[i]++;
-		case 21 :	// Trapeze in progress
-			speed[i] += accel[i] * 0.001;								
-			/*if(speed[i] > speed_max[i])	
-			{
-				speed[i] = speed_max[i];
-				decel_point[i] = targ_pos[i]-real_pos[i]+origi_point[i];
-				motion[i]++;
-			}*/
-			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-			else		cons_pos[i] -= speed[i] * 0.001;
-			break;
-		case 22	:	// Constant speed
+		case MOTION_RUN	:	// Constant speed
 			if( sens[i] && real_pos[i] > decel_point[i]) motion[i]++;
 			if(!sens[i] && real_pos[i] < decel_point[i]) motion[i]++;
 			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
 			else		cons_pos[i] -= speed[i] * 0.001;
 			break;
-		case 23	:	// Decelerate
-			speed[i] -= accel[i] * 0.001;
-			if(speed[i] < 10)// 50 (07/05/2013)
-			{
-				speed[i]=10; //50	 (07/05/2013)			// Ne devrais pas arriver, mais on ne sait jamais
-				//motion[i] = 24;
-			}
-			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
-			else		cons_pos[i] -= speed[i] * 0.001;
-			if( sens[i] && (cons_pos[i] - targ_pos[i]) >= 0) motion[i] = 24;
-			if(!sens[i] && (cons_pos[i] - targ_pos[i]) <= 0) motion[i] = 24;
-
-			break;
-		case 24	:	// Stopping
-			cons_pos[i] = targ_pos[i]; // On force l'exactitude du deplacement
-			if(i==0 && motion[0] == 24 && motion[1] == 24)
-			{
-				motion[0]=0;//1;
-				motion[1]=0;
-				// Envoi au pc la fin de la trajectoire, seulement si i=0 pour ne pas envoyer 2 fois (un seul moteur)
-				return(0x10);	
-			}
-			break;
-		case 30	:	// Deceleration sur arret imprévu (commande STOP SMOOTH)
+		case MOTION_DECEL	:	// Deceleration sur arret imprévu (commande STOP SMOOTH)
 			speed[i] -= accel[i] * 0.001;
 			if(sens[i])	cons_pos[i] += speed[i] * 0.001;
 			else		cons_pos[i] -= speed[i] * 0.001;
@@ -505,18 +447,18 @@ unsigned char Motors_Task(void)
 			{
 				motion[i] = 0;
 				speed[i]  = 0;
-				if(i==0) retour = (0x10); // 10/05/2013 ajout du if(i==0) 
+				if(i==0) retour = FLAG_ENVOI; // 10/05/2013 ajout du if(i==0) 
 			}
 			break;
 		default :	
 			break;
 	}
 	
-	if(motiontype==3) // calage
+	if(motiontype == 3) // calage
 	{
 		for(i=0;i<N;i++)
 		{
-			if(fabs(old_posi[i] - real_pos[i])<0.05)
+			if(fabs(cons_pos[i] - real_pos[i]) > 50)
 			{
 				if(cpt_calage[i]<255) 
 					cpt_calage[i]++;
@@ -525,30 +467,24 @@ unsigned char Motors_Task(void)
 			{
 				cpt_calage[i]=0;
 			}
-			old_posi[i] = real_pos[i];
 		}
 	}
 	else
 	{
-		if(motiontype!=4)
-		{
-			for(i=0;i<N;i++)
-				if(fabs(cons_pos[i] - real_pos[i]) > 150)
+		for(i=0;i<N;i++)
+			if(fabs(cons_pos[i] - real_pos[i]) > 150)
+			{
+				if(cpt_blocage[i]++>20 && pid_power==1)
 				{
-					if(cpt_blocage[i]++>20)
-					{
-						Stop(FREELY);
-						retour = 0x40;
-						return retour;
-					}
+					Stop(FREELY);
+					retour = FLAG_BLOCAGE;
+					return retour;
 				}
-				else
-				{
-					cpt_blocage[i] =0;
-				}
-		}	
-		cpt_calage[0]=0;
-		cpt_calage[1]=0;
+			}
+			else
+			{
+				cpt_blocage[i] =0;
+			}
 	}
 	
 
@@ -571,7 +507,7 @@ void set_pid(double *coeffs)
 // Calcul PID a reiterer a chaque milliseconde
 double pid(unsigned char power,double * targ_pos,double * real_pos)
 {
-	unsigned char i;
+	unsigned char i,j;
 	double cor[N];
 	static double erreur_old[N]={0};
 	
@@ -616,6 +552,8 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 	real_pos[0] = 1.000 * MM_SCALER * (double)raw_position[0]; // Roue droite
 	real_pos[1] = 1.000 * MM_SCALER * (double)raw_position[1]; // Roue gauche
 
+	cor[0] = 0;
+	cor[1] = 0;
 
 	if(pid_power)
 	{
@@ -632,23 +570,34 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 				pid_count = 0;
 			}
 			
-			if(pid_count == 1000) 	cor[i] = erreur[i]*(kp[i]-5);
-			else					cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
+			//if(pid_count == 1000) 	cor[i] = erreur[i]*(kp[i]-5);
+			/*else					*/cor[i] = erreur[i]*kp[i] + (erreur[i] - erreur_old[i])*kd[i];
 			
 			erreur_old[i] = erreur[i]; // Mise a jour necessaire pour le terme derive
 			pwm_cor[i] = cor[i];
+			
+			if(++ptr_cor_moy[i]>(MOYENNE_GLISSANTE_CORRECTEUR-1))	ptr_cor_moy[i] = 0;
+			cor_moy[i][ptr_cor_moy[i]]=cor[i];
+			cor[i]=0;
+			for(j=0;j<MOYENNE_GLISSANTE_CORRECTEUR;j++)
+				cor[i] += cor_moy[i][j];
+			cor[i]=cor[i]/MOYENNE_GLISSANTE_CORRECTEUR;
 		}
 		pwm(GAUCHE,cor[0]);
 		pwm(DROITE,cor[1]);
-		cor[0] = fabs(cor[0]);
-		cor[1] = fabs(cor[1]);
-		if(cor[0]>4000) cor[0]=4000;
-		if(cor[1]>4000) cor[1]=4000;
-		buff_status[0][buff_status_ptr]   = cpu_status;
-		buff_status[1][buff_status_ptr]   = (int) (cor[0]);
-		buff_status[2][buff_status_ptr++] = (int) (cor[1]);
-		if(buff_status_ptr>63) buff_status_ptr=0;
+		cor[0] += 4000;
+		cor[1] += 4000;
+		if(cor[0]>8000) cor[0]=8000;
+		if(cor[1]>8000) cor[1]=8000;
+		if(cor[0]<0) cor[0]=0;
+		if(cor[1]<0) cor[1]=0;
+		
 	}
+	buff_status[0][buff_status_ptr]   = cpu_status;
+	buff_status[1][buff_status_ptr]   = (unsigned int)cor[0];
+	buff_status[2][buff_status_ptr++] = (unsigned int)cor[1];
+	if(buff_status_ptr>63) buff_status_ptr=0;
+	
 	return fabs(cor[0]) + fabs(cor[1]);
 }
 
@@ -656,50 +605,47 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 {
 	double value;
 	value = valeur;
-	
-	if(value >0)
-	{
-		if(value >  erreur_allowed) value -= erreur_allowed;
-		else			value = 0;
-	}
-	else
-	{
-		if(value < -erreur_allowed) value += erreur_allowed;
-		else			value = 0;
-	}
 	if(value >  4095) value =  4095;
 	if(value < -4095) value = -4095;	
-	
+
+	if(motiontype == 3)
+	{
+		if(value >  2000) value =  2000;
+		if(value < -2000) value = -2000;	
+
+	}
+	/*if(bridage)
+	{
+		if(value >  2200) value =  2200;
+		if(value < -2200) value = -2200;	
+	}*/
+
+	value = -value;
+
 	switch(motor)
 	{
 		case AVANT:
 		case GAUCHE:	if(value > 0)	// Moteur Gauche
 						{
-							PWM1CON1bits.PEN2L = 0;		// PWM1L2 pin is enabled for PWM output
-							PWM1CON1bits.PEN2H = 1;		// PWM1L2 pin is enabled for PWM output							
-							P1DC2 = (unsigned int)(value);//+2000);//4095 - value);
+							DIRG  = 1;		// Position incremente
+							P1DC2 = (unsigned int)(4095 - value);		
 						}
 						else
 						{
-							PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
-							PWM1CON1bits.PEN2H = 0;		// PWM1L2 pin is enabled for PWM output							
-							value = -value;
-							P1DC2 = (unsigned int)(4095-value);//+2000);//4095 - value);
+							DIRG  = 0;		// Position decremente
+							P1DC2 = (unsigned int)(4095 + value);		
 						}
 						break;
 		case ARRIERE:
-		case DROITE: 	if(value > 0)	// Moteur Droit // Condition VRAI OK
+		case DROITE: 	if(value > 0)	// Moteur Droit
 						{
-							PWM1CON1bits.PEN1L = 0;		// PWM1L1 pin is enabled for PWM output
-							PWM1CON1bits.PEN1H = 1;		// PWM1L1 pin is enabled for PWM output
-							P1DC1 = (unsigned int)(value);//+2000);//4095 - value);
+							DIRD  = 1;		// Position incremente
+							P1DC1 = (unsigned int)(4095 - value);		
 						}
 						else
 						{
-							PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
-							PWM1CON1bits.PEN1H = 0;		// PWM1L1 pin is enabled for PWM output
-							value = -value;
-							P1DC1 = (unsigned int)(4095-value);//+2000);//4095 - value);
+							DIRD  = 0;		// Position decremente
+							P1DC1 = (unsigned int)(4095 + value);		
 						}
 						break;
 		default : 		return -1;
@@ -708,39 +654,8 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 }
 
 
-/*double fabs(double value)
-{
-	if(value<0) return -value;
-	else		return  value;
-}*/
-
 //----------------------------------------------------------------------------
 
-
-void Sleepms(unsigned int nbr)
-{
-	unsigned int i,j;
-
-	for(i=0;i<nbr;i++)
-		for(j=0;j<8000;j++);
-}
-
-void Sleepus(unsigned int nbr) // Défaut constant de +0.5us
-{
-	unsigned int i;
-
-	for(i=0;i<nbr;i++)
-	{
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-		Nop();	Nop();	Nop();	Nop();
-	}
-}
 
 
 void __attribute__ ((interrupt, no_auto_psv)) _QEI1Interrupt(void) 

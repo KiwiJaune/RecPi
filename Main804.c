@@ -42,6 +42,9 @@ extern double cons_pos[N];
 extern double real_pos[N];
 extern unsigned char scan;
 
+unsigned char flag_envoi_position;
+unsigned int prd_envoi_position = 100;
+
 unsigned char jackAvant = 0;
 unsigned char motor_flag=0,datalogger_blocker=0;
 double position_lock;
@@ -88,35 +91,35 @@ int main(void)
 	Trame Jack;
 	static BYTE Presence[2];
 	Jack.nbChar = 2;
-	Presence[0] = 0xC1;
+	Presence[0] = 0xC3;
 	Presence[1] = CMD_DEPART_JACK;
 	Jack.message = Presence;
 
 	Trame Couleur_Equipe;
 	static BYTE Couleur[3];
 	Couleur_Equipe.nbChar = 3;
-	Couleur[0] = 0xC1;
+	Couleur[0] = 0xC3;
 	Couleur[1] = CMD_REPONSE_COULEUR_EQUIPE;
 	Couleur[2] = PORTBbits.RB4;
 	Couleur_Equipe.message = Couleur;
 
 	Trame envoiFin;
 	static BYTE mess[2];
-	mess[0] = 0xC1;
+	mess[0] = 0xC3;
 	mess[1] = CMD_FINDEPLACEMENT;
 	envoiFin.message = mess;
 	envoiFin.nbChar = 2;
 		
 	Trame envoiBlocage;
 	static BYTE messblocage[2];
-	messblocage[0] = 0xC1;
+	messblocage[0] = 0xC3;
 	messblocage[1] = 0x13;
 	envoiBlocage.message = messblocage;
 	envoiBlocage.nbChar = 2;
 	
 	Trame envoiCalage;
 	static BYTE messcalage[2];
-	messcalage[0] = 0xC1;
+	messcalage[0] = 0xC3;
 	messcalage[1] = CMD_FINRECALLAGE;
 	envoiCalage.message = messcalage;
 	envoiCalage.nbChar = 2;
@@ -155,40 +158,36 @@ int main(void)
 	
 	while(1)
   	{		
-	  	if(PORTAbits.RA8 && jackAvant)
-	  	{
-		  	EnvoiUserUdp (Jack);
-		  	jackAvant = 0;
-		}
-		if(etatCouleur != PORTBbits.RB4)
-		{
-			Couleur[2] = PORTBbits.RB4;
-  			EnvoiUserUdp (Couleur_Equipe);
-  			etatCouleur = PORTBbits.RB4;
-  		}
-		if(flag_envoi) 
+	  	if(flag_envoi) 
 		{	
 			scan=0;
-			EnvoiUserUdp(envoiFin);
+			EnvoiUserUdp(envoiFin,1);
 			flag_envoi = 0;
 		}
 		if(flag_blocage)
 		{
-			EnvoiUserUdp(envoiBlocage);
+			EnvoiUserUdp(envoiBlocage,1);
 			flag_blocage = 0;
 		}
 		if(flag_calage)
 		{
-			EnvoiUserUdp(envoiCalage);
+			EnvoiUserUdp(envoiCalage,1);
 			flag_calage = 0;
 		}
+		if(flag_envoi_position)
+		{
+			//EnvoiUserUdp(PilotePositionXYT(),0);
+			flag_envoi_position = 0;
+		}
 		
+
 		StackTask();
 		trame = ReceptionUserUdp();
 		if(trame.nbChar != 0)
 		{
+
 			trame = AnalyseTrame(trame);
-			EnvoiUserUdp(trame);
+			EnvoiUserUdp(trame,0);
 		}
         StackApplications();
 
@@ -394,10 +393,11 @@ void SaveAppConfig(void)
 
 void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void) 
 {
-	static unsigned int cpt_asser_canon=0;
+	static unsigned int cpt_asser_canon=0,cpt_envoi_position=0;
 	static unsigned char k=0;
 	unsigned char i=0;
 	double temp;
+	unsigned int lol,truc;
 	static double tab_vitesse_canon[16];
 	static unsigned int puissance;
 	static unsigned char etat_canon=0;	
@@ -448,24 +448,30 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 		}
 		cpt_asser_canon=0;
 	}
-	
-	if(motor_flag == 0x10)
+
+		
+	if(cpt_envoi_position++>prd_envoi_position)
 	{
-		motor_flag=0;
-		flag_envoi=1;
+		if(prd_envoi_position !=0) flag_envoi_position=1;
+		cpt_envoi_position=0;
 	}
-	if(motor_flag == 0x30)
+
+	if(motor_flag)
 	{
+		switch(motor_flag)
+		{
+			case FLAG_ENVOI:
+				flag_envoi=1;
+				break;
+			case FLAG_CALAGE:
+				flag_calage=1;
+				break;
+			case FLAG_BLOCAGE:
+				flag_blocage=1;
+				break;
+		}
 		motor_flag=0;
-		flag_calage=1;
 	}
-	if(motor_flag == 0x40)
-	{
-		motor_flag=0;
-		flag_blocage=1;
-	}
-	
-	
 	
 	Cpt_Tmr2_Capteur_Couleur++;
 
@@ -526,6 +532,9 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 			break;
 		}
 	}
+
+	
+
 	cpu_status = (TMR4); //Previous value TMR4
 	IFS1bits.T4IF = 0;
 }

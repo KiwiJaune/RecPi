@@ -19,12 +19,12 @@ typedef struct Trame
 	int nbChar;
 } Trame;
 
-#define portReception 12311
-#define portEmission 12321
+#define portReception 12313
+#define portEmission 12323
 
 void InitUserUdp();
 Trame ReceptionUserUdp();
-void EnvoiUserUdp();
+void EnvoiUserUdp(Trame trame, unsigned char bloquant);
 void EnvoiStringUdp(const char *string);
 void memclr(void * dest, WORD size);
 

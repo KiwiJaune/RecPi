@@ -123,6 +123,7 @@
 	#define UARTRX_TRIS			(TRISFbits.TRISF4)
 	#define UARTRX_IO			(PORTFbits.RF4)
 
+
 	// ENC28J60 I/O pins
 	#define ENC_CS_TRIS			(TRISDbits.TRISD14)	// Comment this line out if you are using the ENC424J600/624J600, ZeroG ZG2100, or other network controller.
 	#define ENC_CS_IO			(PORTDbits.RD14)

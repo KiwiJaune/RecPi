@@ -152,7 +152,7 @@
 #define MY_DEFAULT_HOST_NAME			"MCHPBOARD"
 
 #define MY_DEFAULT_MAC_BYTE1            (0x00)	// Use the default of
-#define MY_DEFAULT_MAC_BYTE2            (0x04)	// 00-04-A3-00-00-00 if using
+#define MY_DEFAULT_MAC_BYTE2            (0x03)	// 00-04-A3-00-00-00 if using
 #define MY_DEFAULT_MAC_BYTE3            (0xA3)	// an ENCX24J600 or ZeroG ZG2100
 #define MY_DEFAULT_MAC_BYTE4            (0x00)	// and wish to use the internal
 #define MY_DEFAULT_MAC_BYTE5            (0x00)	// factory programmed MAC
@@ -161,7 +161,7 @@
 #define MY_DEFAULT_IP_ADDR_BYTE1        (10ul)
 #define MY_DEFAULT_IP_ADDR_BYTE2        (1ul)
 #define MY_DEFAULT_IP_ADDR_BYTE3        (0ul)
-#define MY_DEFAULT_IP_ADDR_BYTE4        (11ul)
+#define MY_DEFAULT_IP_ADDR_BYTE4        (13ul)
 
 #define MY_DEFAULT_MASK_BYTE1           (255ul)
 #define MY_DEFAULT_MASK_BYTE2           (255ul)

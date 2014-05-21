@@ -83,14 +83,34 @@ Trame ReceptionUserUdp()
 	return recu;	
 }
 
-void EnvoiUserUdp(Trame trame)
+void EnvoiUserUdp(Trame trame, unsigned char bloquant)
 {
+	unsigned char i;
+	Trame miwi;
+	// formatage de la trame pour transiter par le miwi
+	BYTE tableau[20];
+	miwi.message = tableau;
+	miwi.nbChar = trame.nbChar + 3;
+
+	for(i=0;i<20;i++)
+	{
+		tableau[i+3] = trame.message[i];
+	}
+	tableau[0] = 0xC5;
+	tableau[1] = 0xA0;
+	
+	if(bloquant)
+		tableau[2] = 0x01;
+	else
+		tableau[2] = 0x00;
+
+
 	if (UDPIsPutReady(socketEmission)) 
 	{
-        if(trame.nbChar != 0)
+        if(miwi.nbChar != 0)
 		{
 			// S'il y a au moins un octet à envoyer, envoi sur le port pc
-			UDPPutArray(trame.message, trame.nbChar);
+			UDPPutArray(miwi.message, miwi.nbChar);
 
            	// Force l'envoi
            	UDPFlush();
@@ -104,7 +124,7 @@ void EnvoiStringUdp(const char *string)
 	Trame envoi;
 	static BYTE mess[20];
 	
-	mess[0] = 0xC1;
+	mess[0] = 0xC3;
 	mess[1] = 0xFF;
 	
 	for(i=0;string[i]!='\0';i++) 
@@ -117,7 +137,7 @@ void EnvoiStringUdp(const char *string)
 	envoi.nbChar = 2+i;
 	envoi.message = mess;
 	
-	EnvoiUserUdp(envoi);
+	EnvoiUserUdp(envoi,1);
 }
 
 /**

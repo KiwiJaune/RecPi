@@ -33,100 +33,64 @@ void Init_Interrupt_Priority(void)
 	IPC18bits.QEI2IP = 7;			//Quad Encoder Interrupt
 }
 
-void InitPorts(void) 
+
+void InitPorts() 
 {
-	// Pinout date : 08_04_13
-	// Ports A
-	// 0 | I | RA0  : 
-	// 1 | I | RA1  : 
-	// 2 | I | RA2  : OSC
-	// 3 | I | RA3  : 
-	// 4 | O | RA4  : Ethernet_RST
-	// 5 
-	// 6 
-	// 7 | I | RA7  : 
-	// 8 | I | RA8  : 
-	// 9 | O | RA9  : Ethernet_CS
-	// A | I | RA10 : 
-	
-	// Ports B
-	// 0 | I | RP0  | RB0  : 
-	// 1 | I | RP1  | RB1  : 
-	// 2 | I | RP2  | RB2  : 
-	// 3 | I | RP3  | RB3  : Codeur_Droit_A
-	// 4 | I | RP4  | RB4  : 
-	// 5 | I | RP5  | RB5  :
-	// 6 | I | RP6  | RB6  :
-	// 7 | I | RP7  | RB7  : Ethernet_INT
-	// 8 | I | RP8  | RB8  : 
-	// 9 | I | RP9  | RB9  : 
-	// A | I | RP10 | RB10 : PGD
-	// B | I | RP11 | RB11 : PGC
-	// C | O | RP12 | RB12 : Moteur_Gauche_IN1
-	// D | O | RP13 | RB13 : Moteur_Gauche_IN2
-	// E | O | RP14 | RB14 : Moteur_Droit_IN1
-	// F | O | RP15 | RB15 : Moteur_Droit_IN2
-	
-	// Ports C
-	// 0 | I | RP16 | RC0  : Codeur_Droit_B
-	// 1 | I | RP17 | RC1  : Codeur_Gauche_A
-	// 2 | I | RP18 | RC2  : Codeur_Gauche_B
-	// 3 | O | RP19 | RC3  : Ethernet_SCK1
-	// 4 | O | RP20 | RC4  : Ethernet_SDO1
-	// 5 | I | RP21 | RC5  : Ethernet_SDI1
-	// 6 | O | RP22 | RC6  : Moteur_Gauche_EN
-	// 7 | O | RP23 | RC7  : Moteur_Droit_EN
-	// 8 | I | RP24 | RC8  : 
-	// 9 | I | RP25 | RC9  : 
-
-	// * : Non utilisé pour le moment, donc configure en entree
-	LATCbits.LATC6 = 0;
-	LATCbits.LATC7 = 0;
-	
-	TRISA 	= 0b1111110111101111;
-	//          FEDCBA9876543210
-	TRISB 	= 0b0000111111111111;
-	//          FEDCBA9876543210
-	TRISC 	= 0b1111111100100111; 
-	//          FEDCBA9876543210
-	
-	//TRISA 	= 0b1111100101110101;
-	//          FEDCBA9876543210
-	//TRISB 	= 0b0000001111111010;
-	//          FEDCBA9876543210
-	//TRISC 	= 0b1111111000100111; //Modif de C9 et C8 : Valeur par default C9 = 0;C8 = 1
-	//          FEDCBA9876543210
-
-	AD1PCFGL=0xFFFF;	//Tous les ports Analogiques configurés en numérique
+	TRISAbits.TRISA0=1; //  - 
+	TRISAbits.TRISA1=1; // VadcV2 (AN1) - Gestion d'alim
+	TRISAbits.TRISA2=1; // Oscillateur 8MHz - Oscillateur
+	TRISAbits.TRISA3=0; // Electroaimant - Lanceur
+	TRISAbits.TRISA4=0; // RST - Ethernet
+	TRISAbits.TRISA7=1; // switch - 
+	TRISAbits.TRISA8=1; // switch - 
+	TRISAbits.TRISA9=0; // CS - Ethernet
+	TRISAbits.TRISA10=1; // switch - 
+	TRISBbits.TRISB0=0; // Electroaimant - Lanceur
+	TRISBbits.TRISB1=1; // CHA - Propulsion gauche
+	TRISBbits.TRISB2=1; // Direction - CDS_AX12
+	TRISBbits.TRISB3=1; // CHA - Propulsion droite
+	TRISBbits.TRISB4=1; // switch - 
+	TRISBbits.TRISB5=1; // PGD - JTAG 
+	TRISBbits.TRISB6=1; // PGC - JTAG 
+	TRISBbits.TRISB7=1; // INT - Ethernet
+	TRISBbits.TRISB8=1; // SCL - I²C
+	TRISBbits.TRISB9=1; // SDA - I²C
+	TRISBbits.TRISB10=1; //  - 
+	TRISBbits.TRISB11=1; //  - 
+	TRISBbits.TRISB12=0; // DIR - Propulsion gauche
+	TRISBbits.TRISB13=0; // PWM1L2 - Propulsion gauche
+	TRISBbits.TRISB14=0; // DIR - Propulsion droite
+	TRISBbits.TRISB15=0; // PWM1L1 - Propulsion droite
+	TRISCbits.TRISC0=1; // CHB - Propulsion droite
+	TRISCbits.TRISC1=1; // VadcV1 (AN7) - Gestion d'alim
+	TRISCbits.TRISC2=1; // CHB - Propulsion gauche
+	TRISCbits.TRISC3=0; // SDO1 - Ethernet
+	TRISCbits.TRISC4=0; // SCK1 - Ethernet
+	TRISCbits.TRISC5=1; // SDI1 - Ethernet
+	TRISCbits.TRISC6=0; // servo - Bras drap bouchon
+	TRISCbits.TRISC7=1; //  - 
+	TRISCbits.TRISC8=1; // RX - CDS_AX12
+	TRISCbits.TRISC9=0; // TX - CDS_AX12
 		
-	RPINR14bits.QEA1R = 3;			// Codeur 1 A (gauche) <==> RP3   //2014
-	RPINR14bits.QEB1R = 16;			// Codeur 1 B (gauche) <==> RP16  //2014
-	RPINR16bits.QEA2R = 17;			// Codeur 2 A (droite) <==> RP17  //2014
-	RPINR16bits.QEB2R = 18;			// Codeur 2 B (droite) <==> RP18  //2014
+	AD1PCFGL=0xFFFF;	//Tous les ports Analogiques configurés en numérique
 	
-	//RPINR16bits.QEA2R = 17;			// CHAd 		<==> RP17  //2013
-	//RPINR16bits.QEB2R = 18;			// CHBd			<==> RP18  //2013
+	RPINR16bits.QEA2R = 3;			// CHAd 		<==> RP3
+	RPINR16bits.QEB2R = 16;			// CHBd			<==> RP16
 
-	//RPINR14bits.QEA1R = 3;			// CHAg			<==> RP3 
-	//RPINR14bits.QEB1R = 16;			// CHBg			<==> RP16 	
+	RPINR14bits.QEA1R = 1;			// CHAg			<==> RP1 
+	RPINR14bits.QEB1R = 18;			// CHBg			<==> RP18
 
-	RPOR10bits.RP20R  = 0b00111;  	// SCK1 <==> RP20 RC3 01/11/2013
-	RPOR9bits.RP19R   = 0b01000;   	// SDO1 <==> RP19 RC4 01/11/2013
-	RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5 01/11/2013
+	RPOR10bits.RP20R = 0b01000; // SCK1 <==> RP20  
+	RPINR20bits.SDI1R = 21; 	// SDI1 <==> RP21
+	RPOR9bits.RP19R = 0b00111;  // SDO1 <==> RP19 
 	
-	//RPOR10bits.RP20R  = 0b01000;  // SCK1 <==> RP20 RC4  //23/01/2013
-	//RPINR20bits.SDI1R = 0b10101; 	// SDI1 <==> RP21 RC5  //23/01/2013
-	//RPOR9bits.RP19R   = 0b00111;  // SDO1 <==> RP19 RC3  //23/01/2013
+	//Configuration des ports pour la liaison UART2 des CDS
+	RPINR19bits.U2RXR	= 24;		// Rx	<==> RP24-RC8
+	RPOR12bits.RP25R	= 0b00101;	// Tx	<==> RP25-RC9
 	
-	//RPOR12bits.RP25R = 0b00011;     //TX RP24
-    //RPINR18 = 0b11000;              //RX RP25
-    //TRISCbits.TRISC8 = 0;
-    //TRISCbits.TRISC9 = 1;
-
-	//LATAbits.LATA3 = 0; 	// Alimentation OFF
 	
 	//Initialisation du sens de communication pour les AX12
-	//LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
+	LATBbits.LATB2 = 1;	// 1 J'envoie et 0 je réceptionne
 }
 
 void Init_Input_Capture(void)
@@ -238,41 +202,23 @@ void Init_Timer5(void)
 
 void InitPWM(void)
 {
-	PWM1CON2bits.OSYNC = 1;
-	LATCbits.LATC6 = 0;
-	LATCbits.LATC7 = 0;
-	Sleepms(10);
-	LATCbits.LATC6 = 1;
-	LATCbits.LATC7 = 1;
-	
 	P1TCONbits.PTEN = 1; 		// PWM Time base is On
 	P1TPER = 2000 - 1; 			// 20kHz PWM (2000 counts @40MIPS)
-	PWM1CON1bits.PEN1L = 0;		// PWM1L1 pin is disabled for PWM output
-	PWM1CON1bits.PEN1H = 0;		// PWM1H1 pin is disabled for PWM output
-	PWM1CON1bits.PEN2L = 0;		// PWM1L2 pin is disabled for PWM output
-	PWM1CON1bits.PEN2H = 0;		// PWM1H2 pin is disabled for PWM output
-	
-	LATBbits.LATB12 = 0;
-	LATBbits.LATB13 = 0;
-	LATBbits.LATB14 = 0;
-	LATBbits.LATB15 = 0;
-	
-	
+	PWM1CON1bits.PEN1L = 1;		// PWM1L1 pin is enabled for PWM output
+	PWM1CON1bits.PEN2L = 1;		// PWM1L2 pin is enabled for PWM output
 
-	P1DC1 = 0xFFFF;				// 0x0000 = 100.00% Power
-	P1DC2 = 0xFFFF;				// 0xFFFF =   0.00% Power
+	P1DC1 = 0xFFFF;	// 0x0000 = 100.00% Power
+	P1DC2 = 0xFFFF;	// 0xFFFF =   0.00% Power
 }
 
 void InitQEI(void)
 {
 	QEI1CONbits.QEIM  = 0b111;
 	QEI2CONbits.QEIM  = 0b111;
-	QEI1CONbits.SWPAB = 1;
+	QEI1CONbits.SWPAB = 0;
 	QEI2CONbits.SWPAB = 0;
 	POS1CNT = 0x0000;
 	POS2CNT = 0x0000;
-	//DFLT1CONbits.QECK = 0b111;
-	//DFLT2CONbits.QECK = 0b111;
 	IFS3bits.QEI1IF = 0;
 	IFS4bits.QEI2IF = 0;
 	IEC3bits.QEI1IE = 1;
