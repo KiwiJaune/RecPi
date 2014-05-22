@@ -176,7 +176,7 @@ int main(void)
 		}
 		if(flag_envoi_position)
 		{
-			//EnvoiUserUdp(PilotePositionXYT(),0);
+			EnvoiUserUdp(PilotePositionXYT(),0);
 			flag_envoi_position = 0;
 		}
 		
@@ -185,9 +185,9 @@ int main(void)
 		trame = ReceptionUserUdp();
 		if(trame.nbChar != 0)
 		{
-
 			trame = AnalyseTrame(trame);
-			EnvoiUserUdp(trame,0);
+			if(trame.message[0] == 0xC3)
+				EnvoiUserUdp(trame,0);
 		}
         StackApplications();
 

@@ -835,7 +835,7 @@ Trame AnalyseTrame(Trame t)
 	unsigned int param1, param2, param3, param4;
 	
 	retour = t;
-
+	
 	// Les messages ne commencant pas par 0xC3 ne nous sont pas adressés (RecMove)
 	if(t.message[0] != 0xC3)
 		return t;
