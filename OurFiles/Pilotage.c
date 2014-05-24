@@ -483,16 +483,27 @@ Trame Presence_Balle(void)
 
 Trame ReponseEcho()
 {
-	static Trame trame;
-	static BYTE tableau[2];
-	trame.nbChar = 2;
+	BYTE vbat[6];
+	static Trame trameEcho;
+	static BYTE msgEcho[6];
 
-	tableau[0] = 0xC3;
-	tableau[1] = 0xF5;
-	
-	trame.message = tableau;
-	
-	return trame;
+	long bat1 = (float)(ADC_Results[5] * 0.012693 + 0.343777) * 100;
+	long bat2 = (float)(ADC_Results[1] * 0.012693 + 0.343777) * 100;
+
+	vbat[0] = bat1 >> 8; // Etalonnage de compétition !
+	vbat[1] = bat1 & 0xFF;	
+	vbat[2] = bat2 >> 8; // Etalonnage de compétition !
+	vbat[3] = bat2 & 0xFF;				
+	  	
+	trameEcho.nbChar = 6;
+	trameEcho.message = msgEcho;
+	msgEcho[0] = 0xC3;
+	msgEcho[1] = CMD_REPONSE_ECHO;
+	msgEcho[2] = (BYTE) vbat[0];
+	msgEcho[3] = (BYTE) vbat[1];
+	msgEcho[4] = (BYTE) vbat[2];
+	msgEcho[5] = (BYTE) vbat[3];
+	return trameEcho;
 }
 
 unsigned int Send_Variable_Capteur_Couleur(void){
@@ -946,7 +957,7 @@ Trame AnalyseTrame(Trame t)
 		break;
 
 		case CMD_ECHO:
-			//bridage = t.message[2];
+			bridage = t.message[2];
 			retour = ReponseEcho();
 		break;
 

@@ -74,11 +74,11 @@ void InitPorts()
 		
 	AD1PCFGL=0xFFFF;	//Tous les ports Analogiques configurés en numérique
 	
-	RPINR16bits.QEA2R = 3;			// CHAd 		<==> RP3
-	RPINR16bits.QEB2R = 16;			// CHBd			<==> RP16
+	RPINR14bits.QEA1R = 3;			// CHAd 		<==> RP3
+	RPINR14bits.QEB1R = 16;			// CHBd			<==> RP16
 
-	RPINR14bits.QEA1R = 1;			// CHAg			<==> RP1 
-	RPINR14bits.QEB1R = 18;			// CHBg			<==> RP18
+	RPINR16bits.QEA2R = 1;			// CHAg			<==> RP1 
+	RPINR16bits.QEB2R = 18;			// CHBg			<==> RP18
 
 	RPOR10bits.RP20R = 0b01000; // SCK1 <==> RP20  
 	RPINR20bits.SDI1R = 21; 	// SDI1 <==> RP21
@@ -216,7 +216,7 @@ void InitQEI(void)
 	QEI1CONbits.QEIM  = 0b111;
 	QEI2CONbits.QEIM  = 0b111;
 	QEI1CONbits.SWPAB = 0;
-	QEI2CONbits.SWPAB = 0;
+	QEI2CONbits.SWPAB = 1;
 	POS1CNT = 0x0000;
 	POS2CNT = 0x0000;
 	IFS3bits.QEI1IF = 0;
@@ -246,18 +246,18 @@ void InitADC(void)
 	//AD1CSSH/AD1CSSL: A/D Input Scan Selection Register
 	AD1CSSLbits.CSS0=1;		// Enable AN0 for channel scan
 	AD1CSSLbits.CSS1=1;		// Enable AN1 for channel scan
-	AD1CSSLbits.CSS2=1;		// Enable AN2 for channel scan
-	AD1CSSLbits.CSS3=1;		// Enable AN3 for channel scan
-	AD1CSSLbits.CSS6=1;		// Enable AN6 for channel scan
+	AD1CSSLbits.CSS2=0;		// Enable AN2 for channel scan
+	AD1CSSLbits.CSS3=0;		// Enable AN3 for channel scan
+	AD1CSSLbits.CSS6=0;		// Enable AN6 for channel scan
 	AD1CSSLbits.CSS7=1;		// Enable AN7 for channel scan
 	
  	//AD1PCFGH/AD1PCFGL: Port Configuration Register
 	AD1PCFGL=0xFFFF;
-	AD1PCFGLbits.PCFG0 = 0;	// AN0 as Analog Input
-	AD1PCFGLbits.PCFG1 = 0;	// AN1 as Analog Input 
- 	AD1PCFGLbits.PCFG2 = 0;	// AN2 as Analog Input
-	AD1PCFGLbits.PCFG3 = 0;	// AN3 as Analog Input 
-	AD1PCFGLbits.PCFG6 = 0;	// AN6 as Analog Input
+	AD1PCFGLbits.PCFG0 = 1;	// AN0 as Digital Input
+	AD1PCFGLbits.PCFG1 = 0;	// AN1 as Digital Input 
+ 	AD1PCFGLbits.PCFG2 = 1;	// AN2 as Digital Input
+	AD1PCFGLbits.PCFG3 = 1;	// AN3 as Digital Input 
+	AD1PCFGLbits.PCFG6 = 1;	// AN6 as Digital Input
 	AD1PCFGLbits.PCFG7 = 0;	// AN7 as Analog Input 
 	
 	IFS0bits.AD1IF   = 0;		// Clear the A/D interrupt flag bit

@@ -622,10 +622,13 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 
 	value = -value;
 
+	if(motor==DROITE)
+		value = -value;
+
 	switch(motor)
 	{
-		case AVANT:
-		case GAUCHE:	if(value > 0)	// Moteur Gauche
+		case ARRIERE:
+		case DROITE:	if(value > 0)	// Moteur Gauche
 						{
 							DIRG  = 1;		// Position incremente
 							P1DC2 = (unsigned int)(4095 - value);		
@@ -636,8 +639,8 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 							P1DC2 = (unsigned int)(4095 + value);		
 						}
 						break;
-		case ARRIERE:
-		case DROITE: 	if(value > 0)	// Moteur Droit
+		case AVANT:
+		case GAUCHE: 	if(value > 0)	// Moteur Droit
 						{
 							DIRD  = 1;		// Position incremente
 							P1DC1 = (unsigned int)(4095 - value);		

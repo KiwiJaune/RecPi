@@ -129,8 +129,6 @@ int main(void)
     Init_Timer();	// Initialisation Timer2,Timer4 & Timer5
 	InitQEI(); 		// Initialisation des entrées en quadrature
 	InitPWM();		// Configuration du module PWM 
-//	InitADC();
-//	InitDMA();
 	InitProp();
 	
 	// Initialize stack-related hardware components that may be 
@@ -155,6 +153,8 @@ int main(void)
 	Init_Pompe();
 	Init_Input_Capture();
 	Init_Alimentation();
+	InitADC();
+	InitDMA();
 	
 	while(1)
   	{		
