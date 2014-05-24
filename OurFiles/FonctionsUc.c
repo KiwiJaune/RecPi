@@ -119,13 +119,13 @@ void InitUART2() {
 	IEC0bits.U1TXIE = 0;         // enable UART Tx interrupt
 
 	IFS0bits.U1RXIF = 0;		 // clear interrupt flag of rx
-	IEC0bits.U1RXIE = 0;		 // enable rx recieved data
-//  IPC2bits.U1RXIP = 2;
+	IEC0bits.U1RXIE = 1;		 // enable rx recieved data
+	IPC2bits.U1RXIP = 1;
    
     RPOR12bits.RP25R = 0b00011;     //TX RP24
     RPINR18 = 0b11000;              //RX RP25
-    TRISCbits.TRISC8 = 0;
-    TRISCbits.TRISC9 = 1;
+    TRISCbits.TRISC8 = 1;
+    TRISCbits.TRISC9 = 0;
     AD1PCFGL = 0xFFFF;
 }
 

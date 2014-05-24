@@ -145,9 +145,9 @@ void Init_Turbine(void)
 //Assiette : Position Haut (0.5ms)
 void Init_Servos(void)
 {
-	CDS5516Pos(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
-	CDS5516Pos(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
-	Assiette_Position(INIT_ASSIETTE);
+//	CDS5516EnvoiMessage(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
+//	CDS5516EnvoiMessage(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
+//	Assiette_Position(INIT_ASSIETTE);
 }
 
 //Initalisation Alimentation
@@ -838,13 +838,365 @@ int PiloteOffsetAsserv(int x, int y, int teta)
 	return 1;
 }
 
+//Fonctions servo
+Trame PiloteServoDemandeBaudrate(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = id;
+	msgServo[3] = CMD_SERVO_RETOUR_BAUDRATE;
+	msgServo[4] = CDS5516DemandeBaudrate(id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeConfigAlarmeLED(char id)
+{
+	int config = CDS5516DemandeConfigAlarmeLED(103, id);
+	trameServo.nbChar = 11;
+	msgServo[2] = CMD_SERVO_RETOUR_CFG_ALARME_LED;
+	msgServo[3] = id;
+	if(config & 0b01000000)
+		msgServo[4] = 1;
+	else
+		msgServo[4] = 0;
+	if(config & 0b00100000)
+		msgServo[5] = 1;
+	else
+		msgServo[5] = 0;
+	if(config & 0b00010000)
+		msgServo[6] = 1;
+	else
+		msgServo[6] = 0;
+	if(config & 0b00001000)
+		msgServo[7] = 1;
+	else
+		msgServo[7] = 0;
+	if(config & 0b00000100)
+		msgServo[8] = 1;
+	else
+		msgServo[8] = 0;
+	if(config & 0b00000010)
+		msgServo[9] = 1;
+	else
+		msgServo[9] = 0;
+	if(config & 0b00000001)
+		msgServo[10] = 1;
+	else
+		msgServo[10] = 0;
+		
+	return trameServo;
+}
+
+Trame PiloteServoDemandeConfigAlarmeShutdown(char id)
+{
+	int config = CDS5516DemandeConfigAlarmeShutdown(103, id);
+	trameServo.nbChar = 11;
+	msgServo[2] = CMD_SERVO_RETOUR_CFG_ALARME_SHUTDOWN;
+	msgServo[3] = id;
+	if(config & 0b01000000)
+		msgServo[4] = 1;
+	else
+		msgServo[4] = 0;
+	if(config & 0b00100000)
+		msgServo[5] = 1;
+	else
+		msgServo[5] = 0;
+	if(config & 0b00010000)
+		msgServo[6] = 1;
+	else
+		msgServo[6] = 0;
+	if(config & 0b00001000)
+		msgServo[7] = 1;
+	else
+		msgServo[7] = 0;
+	if(config & 0b00000100)
+		msgServo[8] = 1;
+	else
+		msgServo[8] = 0;
+	if(config & 0b00000010)
+		msgServo[9] = 1;
+	else
+		msgServo[9] = 0;
+	if(config & 0b00000001)
+		msgServo[10] = 1;
+	else
+		msgServo[10] = 0;
+		
+	return trameServo;
+}
+
+Trame PiloteServoDemandeConfigEcho(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_CFG_ECHO;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeConfigEcho(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeCompliance(char id)
+{
+	trameServo.nbChar = 8;
+	msgServo[2] = CMD_SERVO_RETOUR_COMPLIANCE_PARAMS;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeCCWSlope(103, id);
+	msgServo[5] = CDS5516DemandeCCWMargin(103, id);
+	msgServo[6] = CDS5516DemandeCWSlope(103, id);
+	msgServo[7] = CDS5516DemandeCWMargin(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeCoupleActive(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_COUPLE_ACTIVE;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeCoupleActive(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeCoupleMaximum(char id)
+{
+	int valeur = CDS5516DemandeCoupleMaximum(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_COUPLE_MAX;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoPing(char id)
+{
+	int valeur=CDS5516Ping(103, id);
+	trameServo.nbChar = 11;
+	msgServo[2] = CMD_SERVO_RETOUR_ERREURS;
+	msgServo[3] = id;
+	msgServo[4] = (valeur>>1)&0x01;
+	msgServo[5] = (valeur>>4)&0x01;
+	msgServo[6] = (valeur)&0x01;
+	msgServo[7] = (valeur>>6)&0x01;
+	msgServo[8] = (valeur>>2)&0x01;
+	msgServo[9] = (valeur>>5)&0x01;
+	msgServo[10] = (valeur>>3)&0x01;
+	
+	return trameServo;
+}
+
+Trame PiloteServoTrouveID()
+{
+	trameServo.nbChar = 4;
+	msgServo[2] = CMD_SERVO_RETOUR_ID;
+	msgServo[3] = CDS5516DemandeID(103);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeLed(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_LED;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeLed(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeMouvement(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_MOUVEMENT;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeMouvement(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeModele(char id)
+{
+	int valeur = CDS5516DemandeModele(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_NUMERO_MODELE;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoDemandePositionActuelle(char id)
+{
+	int valeur = CDS5516DemandePositionActuelle(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_POSITION_ACTUELLE;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoDemandePositionCible(char id)
+{
+	int valeur = CDS5516DemandePositionCible(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_POSITION_CIBLE;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoDemandePositionMax(char id)
+{
+	int valeur = CDS5516DemandePositionMax(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_POSITION_MAX;
+	msgServo[3] = id;
+	msgServo[4] = (int)valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoDemandePositionMin(char id)
+{
+	int valeur = CDS5516DemandePositionMin(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_POSITION_MIN;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoDemandeTemperature(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_TEMPERATURE;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeTemperature(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeTension(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_TENSION;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeTension(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeVersionFirmware(char id)
+{
+	trameServo.nbChar = 5;
+	msgServo[2] = CMD_SERVO_RETOUR_VERSION_FIRMWARE;
+	msgServo[3] = id;
+	msgServo[4] = CDS5516DemandeVersionFirmware(103, id);
+	return trameServo;
+}
+
+Trame PiloteServoDemandeVitesseActuelle(char id)
+{
+	int valeur = CDS5516DemandeVitesseActuelle(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_VITESSE_ACTUELLE;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+Trame PiloteServoDemandeVitesseMax(char id)
+{
+	int valeur = CDS5516DemandeVitesseMax(103, id);
+	trameServo.nbChar = 6;
+	msgServo[2] = CMD_SERVO_RETOUR_VITESSE_MAX;
+	msgServo[3] = id;
+	msgServo[4] = valeur >> 8;
+	msgServo[5] = valeur & 0xFF;
+	return trameServo;
+}
+
+int PiloteServoEnvoiBauderate(char id, char baudrate)
+{
+	CDS5516EnvoiBauderate(103 , id, baudrate);
+	return 1;
+}
+
+int PiloteServoEnvoiAlarmeLED(char id, char inputVoltage, char angleLimit, char overheating, char range, char checksum, char overload, char instruction)
+{
+	CDS5516EnvoiAlarmeLED(103 , id, inputVoltage, angleLimit, overheating, range, checksum, overload, instruction);
+	return 1;
+}
+
+int PiloteServoEnvoiAlarmeShutdown(char id, char inputVoltage, char angleLimit, char overheating, char range, char checksum, char overload, char instruction)
+{
+	CDS5516EnvoiAlarmeShutdown(103, id, inputVoltage, angleLimit, overheating, range, checksum, overload, instruction);
+	return 1;
+}
+
+int PiloteServoEnvoiComplianceParams(char id, char CCWSlope, char CCWMargin, char CWSlope, char CWMargin)
+{
+	CDS5516EnvoiComplianceParams(103, id, CCWSlope, CCWMargin, CWSlope, CWMargin);
+	return 1;
+}
+
+int PiloteServoEnvoiCoupleActive(char id, char coupleActive)
+{
+	CDS5516EnvoiCoupleActive(103, id, coupleActive);
+	return 1;
+}
+
+int PiloteServoEnvoiCoupleMaximum(char id, unsigned int coupleMax)
+{
+	CDS5516EnvoiCoupleMaximum(103, id, coupleMax);
+	return 1;
+}
+
+int PiloteServoEnvoiId(char id, char nouvelId)
+{
+	CDS5516EnvoiId(103, id, nouvelId);
+	return 1;
+}
+
+int PiloteServoEnvoiLed(char id, char ledAllume)
+{
+	CDS5516EnvoiLed(103, id, ledAllume);
+	return 1;
+}
+
+int PiloteServoEnvoiPosistionCible(char id, unsigned int positionCible)
+{
+	CDS5516EnvoiPosistionCible(103, id, positionCible);
+	return 1;
+}
+
+int PiloteServoEnvoiPosistionMax(char id, unsigned int positionMax)
+{
+	CDS5516EnvoiPositionMax(103, id, positionMax);
+	return 1;
+}
+
+int PiloteServoEnvoiPosistionMin(char id, unsigned int positionMin)
+{
+	CDS5516EnvoiPositionMin(103, id, positionMin);
+	return 1;
+}
+
+int PiloteServoEnvoiVitesseMax(char id, unsigned int vitesseMax)
+{
+	CDS5516EnvoiVitesseMax(103, id, vitesseMax);
+	return 1;
+}
+
+int PiloteServoReset(char id)
+{
+	CDS5516Reset(103, id);
+	return 1;
+}
+
 // Analyse la trame recue et renvoie vers la bonne fonction de pilotage
 // Trame t : Trame ethernet recue
 Trame AnalyseTrame(Trame t)
 {
 	Trame retour;
-	unsigned int param1, param2, param3, param4;
-	
+	unsigned int param1, param2, param3, param4, param5, param6, param7, param8;
+
 	retour = t;
 	
 	// Les messages ne commencant pas par 0xC3 ne nous sont pas adressés (RecMove)
@@ -1022,58 +1374,214 @@ Trame AnalyseTrame(Trame t)
 				Shutter_Pos(SHUTTER_PAS_BLOQUE);
 		break;
 	
-		case CMD_SERVO_POSITION:
-			if(t.message[2] == ID_SERVO_ASSIETTE)
-			{
-				Assiette_Position((t.message[3]*256+t.message[4])+312);
-			}
-			else 
-			{
-				param1 = t.message[2];						// Id servo
-				param2 = t.message[3] * 256 + t.message[4];	// Position
-				param3 = 19100;
-				CDS5516Pos(param3,param1,param2);
-			}
-		break;	
-
-		case CMD_SERVO_VITESSE:
-			// Bouge servomoteur
-			param1 = t.message[2];						// Id servo
-			param2 = t.message[3] * 256 + t.message[4];	// Position
-			param3 = 19100;
-			CDS5516Vit(param3, param1,param2);
-		break;
-
-		case CMD_DEMANDE_PRESENCE_BALLE:
-			return Presence_Balle();
-		break;
-
-		case CMD_DEMANDE_COULEUR:
-			return Couleur_Balle();
-		break;
-
-		case CMD_POMPE_A_VIDE:
-			Commande_Pompe(t.message[2]);
-		break;
-
-		case CMD_DEMANDE_MESURE_CANON:	
-			retour = PiloteMesureCanon();
-		break;
-		
-		case CMD_CONSIGNE_CANON:
-			consigne_canon= t.message[2] * 256 + t.message[3];
-			if(consigne_canon==0) Canon_Vitesse(5000);
-		break;
+		case CMD_SERVOMOTEUR:
+	
+				msgServo[0] = 0xC3;
+				msgServo[1] = CMD_SERVOMOTEUR;
+				trameServo.message = msgServo;
+				
+				//Addr doublon 14 devient 4 
+				if(t.message[3] == 14)
+					 t.message[3] = 4;
+			
+				switch(t.message[2])
+				{
+					case CMD_SERVO_DEMANDE_BAUDRATE:
+						param1 = t.message[3];
+						return PiloteServoDemandeBaudrate(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_CFG_ALARME_LED:
+						param1 = t.message[3];
+						return PiloteServoDemandeConfigAlarmeLED(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_CFG_ALARME_SHUTDOWN:
+						param1 = t.message[3];
+						return PiloteServoDemandeConfigAlarmeShutdown(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_CFG_ECHO:
+						param1 = t.message[3];
+						return PiloteServoDemandeConfigEcho(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_COMPLIANCE_PARAMS:
+						param1 = t.message[3];
+						return PiloteServoDemandeCompliance(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_COUPLE_ACTIVE:
+						param1 = t.message[3];
+						return PiloteServoDemandeCoupleActive(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_COUPLE_MAX:
+						param1 = t.message[3];
+						return PiloteServoDemandeCoupleMaximum(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_ERREURS:
+						param1 = t.message[3];
+						return PiloteServoPing(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_ID:
+						return PiloteServoTrouveID();
+						break;
+					case CMD_SERVO_DEMANDE_LED:
+						param1 = t.message[3];
+						return PiloteServoDemandeLed(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_MOUVEMENT:
+						param1 = t.message[3];
+						return PiloteServoDemandeMouvement(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_NUMERO_MODELE:
+						param1 = t.message[3];
+						return PiloteServoDemandeModele(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_POSITION_ACTUELLE:
+						param1 = t.message[3];
+						return PiloteServoDemandePositionActuelle(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_POSITION_CIBLE:
+						param1 = t.message[3];
+						return PiloteServoDemandePositionCible(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_POSITION_MAX:
+						param1 = t.message[3];
+						return PiloteServoDemandePositionMax(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_POSITION_MIN:
+						param1 = t.message[3];
+						return PiloteServoDemandePositionMin(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_TEMPTERATURE:
+						param1 = t.message[3];
+						return PiloteServoDemandeTemperature(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_TENSION:
+						param1 = t.message[3];
+						return PiloteServoDemandeTension(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_VERSION_FIRMWARE:
+						param1 = t.message[3];
+						return PiloteServoDemandeVersionFirmware(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_VITESSE_ACTUELLE:
+						param1 = t.message[3];
+						return PiloteServoDemandeVitesseActuelle(param1);
+						break; 
+					case CMD_SERVO_DEMANDE_VITESSE_MAX:
+						param1 = t.message[3];
+						return PiloteServoDemandeVitesseMax(param1);
+						break; 
+					case CMD_SERVO_ENVOI_BAUDRATE:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						PiloteServoEnvoiBauderate(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_CFG_ALARME_LED:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						param3 = t.message[5];
+						param4 = t.message[6];
+						param5 = t.message[7];
+						param6 = t.message[8];
+						param7 = t.message[9];
+						param8 = t.message[10];
+						PiloteServoEnvoiAlarmeLED(param1, param2, param3, param4, param5, param6, param7, param8);
+						break;
+					case CMD_SERVO_ENVOI_CFG_ALARME_SHUTDOWN:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						param3 = t.message[5];
+						param4 = t.message[6];
+						param5 = t.message[7];
+						param6 = t.message[8];
+						param7 = t.message[9];
+						param8 = t.message[10];
+						PiloteServoEnvoiAlarmeShutdown(param1, param2, param3, param4, param5, param6, param7, param8);
+						break;
+					case CMD_SERVO_ENVOI_CFG_ECHO:
+						// TODO
+						break;
+					case CMD_SERVO_ENVOI_COMPLIANCE_PARAMS:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						param3 = t.message[5];
+						param4 = t.message[6];
+						param5 = t.message[7];
+						PiloteServoEnvoiComplianceParams(param1, param2, param3, param4, param5);
+						break;
+					case CMD_SERVO_ENVOI_COUPLE_ACTIVE:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						PiloteServoEnvoiCoupleActive(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_COUPLE_MAX:
+						param1 = t.message[3];
+						param2 = t.message[4] * 256 + t.message[5];
+						PiloteServoEnvoiCoupleMaximum(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_ID:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						PiloteServoEnvoiId(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_LED:
+						param1 = t.message[3];
+						param2 = t.message[4];
+						PiloteServoEnvoiLed(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_POSITION_CIBLE:
+						param1 = t.message[3];
+						param2 = t.message[4] * 256 + t.message[5];
+						PiloteServoEnvoiPosistionCible(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_POSITION_MAX:
+						param1 = t.message[3];
+						param2 = t.message[4] * 256 + t.message[5];
+						PiloteServoEnvoiPosistionMax(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_POSITION_MIN:
+						param1 = t.message[3];
+						param2 = t.message[4] * 256 + t.message[5];
+						PiloteServoEnvoiPosistionMin(param1, param2);
+						break;
+					case CMD_SERVO_ENVOI_VITESSE_MAX:
+						param1 = t.message[3];
+						param2 = t.message[4] * 256 + t.message[5];
+						PiloteServoEnvoiVitesseMax(param1, param2);
+						break;
+					case CMD_SERVO_RESET:
+						param1 = t.message[3];
+						PiloteServoReset(param1);
+						break;
+				}
+//		case CMD_DEMANDE_PRESENCE_BALLE:
+//			return Presence_Balle();
+//		break;
+//
+//		case CMD_DEMANDE_COULEUR:
+//			return Couleur_Balle();
+//		break;
+//
+//		case CMD_POMPE_A_VIDE:
+//			Commande_Pompe(t.message[2]);
+//		break;
+//
+//		case CMD_DEMANDE_MESURE_CANON:	
+//			retour = PiloteMesureCanon();
+//		break;
+//		
+//		case CMD_CONSIGNE_CANON:
+//			consigne_canon= t.message[2] * 256 + t.message[3];
+//			if(consigne_canon==0) Canon_Vitesse(5000);
+//		break;
 		
 		case CMD_RESET_CARTE:
 			Reset();
 		break;
-		case CMD_ARME_JACK:
-			jackAvant=1;
-		break;
-		case CMD_DEMANDE_PRESENCE_JACK:
-			return Presence_Jack();
-		break;
+//		case CMD_ARME_JACK:
+//			jackAvant=1;
+//		break;
+//		case CMD_DEMANDE_PRESENCE_JACK:
+//			return Presence_Jack();
+//		break;
 		case CMD_CONSIGNE_POSITION:
 			if(t.message[2] == AVANT)
 			{
