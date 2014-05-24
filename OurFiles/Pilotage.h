@@ -206,3 +206,8 @@ Trame AnalyseTrame(Trame t);
 #define	CMD_RESET_CARTE					0xF1
 #define CMD_DEMANDE_PRESENCE_JACK		0xF3
 #define CMD_REPONSE_PRESENCE_JACK		0xF4
+
+
+// Actionneurs onOff
+#define CMD_ACTIONNEUR_ONOFF			0x65
+#define ID_ACTIONNEUR_LANCE					0x20
