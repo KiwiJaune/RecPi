@@ -45,11 +45,11 @@ extern unsigned char scan;
 unsigned char flag_envoi_position;
 unsigned int prd_envoi_position = 100;
 
-unsigned char jackAvant = 0;
+unsigned char jackAvant = 0,trame_recu[20],recu_nbr,timeout_servo;
 unsigned char motor_flag=0,datalogger_blocker=0;
 double position_lock;
 unsigned int datalogger_counter=0,flag=0,courrier=0,PID_ressource_used;
-unsigned char flag_envoi=0,flag_blocage=0,flag_calage=0;
+unsigned char flag_envoi=0,flag_blocage=0,flag_calage=0,flag_servo=0;
 
 //Variable Capteur Couleur
 unsigned int Cpt_Tmr2_Capteur_Couleur = 0;
@@ -403,6 +403,8 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 	static unsigned char etat_canon=0;	
 	static double vitesse_canon_brut;
 
+	timeout_servo++;
+
 	flag = 0;
 	courrier = 1;
 	motor_flag = Motors_Task(); // Si prend trop de ressource sur l'udp, inclure motortask dans le main	
@@ -423,31 +425,31 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 		}
 		vitesse_canon = temp/16;
 	}
-
-	if(cpt_asser_canon++>prd_asser_canon)
-	{
-		if(consigne_canon == 0) etat_canon =0;
-		else					Canon_Vitesse(puissance);
-		switch(etat_canon)
-		{
-			case 0:	puissance=5000;//IDLE
-					if(consigne_canon!=0)	etat_canon++; // WAKE UP !
-					break;
-			case 1:	prd_asser_canon=300;
-					puissance=7200;
-					etat_canon++;
-					break;
-			case 2:	prd_asser_canon=50;
-					puissance=5500;
-					etat_canon++;
-					break;
-			case 3:	prd_asser_canon=70;
-					if(vitesse_canon_brut<(consigne_canon-15)) puissance+=1;
-					if(vitesse_canon_brut>(consigne_canon+15)) puissance-=1;
-					break;
-		}
-		cpt_asser_canon=0;
-	}
+//
+//	if(cpt_asser_canon++>prd_asser_canon)
+//	{
+//		if(consigne_canon == 0) etat_canon =0;
+//		else					Canon_Vitesse(puissance);
+//		switch(etat_canon)
+//		{
+//			case 0:	puissance=5000;//IDLE
+//					if(consigne_canon!=0)	etat_canon++; // WAKE UP !
+//					break;
+//			case 1:	prd_asser_canon=300;
+//					puissance=7200;
+//					etat_canon++;
+//					break;
+//			case 2:	prd_asser_canon=50;
+//					puissance=5500;
+//					etat_canon++;
+//					break;
+//			case 3:	prd_asser_canon=70;
+//					if(vitesse_canon_brut<(consigne_canon-15)) puissance+=1;
+//					if(vitesse_canon_brut>(consigne_canon+15)) puissance-=1;
+//					break;
+//		}
+//		cpt_asser_canon=0;
+//	}
 
 		
 	if(cpt_envoi_position++>prd_envoi_position)
@@ -537,4 +539,46 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 
 	cpu_status = (TMR4); //Previous value TMR4
 	IFS1bits.T4IF = 0;
+}
+//Interrupt receive message UART1
+//void __attribute__((interrupt,shadow,auto_psv)) _U1RXInterrupt(void) // shadow de merde
+void __attribute__((interrupt,auto_psv)) _U1RXInterrupt(void)
+{
+	static unsigned etat_rx=0;
+	static unsigned char recu,recu_ptr;
+
+	IFS0bits.U1RXIF = 0; 		// clear RX interrupt flag
+	
+	if(U1STAbits.URXDA == 1)
+	{
+		recu = U1RXREG;
+		if(flag_servo==0)
+		{
+			switch(etat_rx)
+			{
+				case 0: recu_ptr=0;
+						if(recu == 0xFF)	etat_rx++;
+						trame_recu[recu_ptr++]=recu;
+						break;
+				case 1: if(recu == 0xFF)	etat_rx++;
+						else	etat_rx=0;
+						trame_recu[recu_ptr++]=recu;
+						break;
+				case 2:	etat_rx++;
+						trame_recu[recu_ptr++]=recu;
+						break;
+				case 3:	recu_nbr = recu;
+						etat_rx++;
+						trame_recu[recu_ptr++]=recu;
+						break;
+				case 4:	trame_recu[recu_ptr++]=recu;
+						if(recu_ptr == (recu_nbr + 4))
+						{
+							flag_servo=1;
+							etat_rx=0;
+						}
+						break;
+			}
+		}
+	}			
 }

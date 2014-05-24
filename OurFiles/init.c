@@ -47,7 +47,7 @@ void InitPorts()
 	TRISAbits.TRISA10=1; // switch - 
 	TRISBbits.TRISB0=0; // Electroaimant - Lanceur
 	TRISBbits.TRISB1=1; // CHA - Propulsion gauche
-	TRISBbits.TRISB2=1; // Direction - CDS_AX12
+	TRISBbits.TRISB2=0; // Direction - CDS_AX12
 	TRISBbits.TRISB3=1; // CHA - Propulsion droite
 	TRISBbits.TRISB4=1; // switch - 
 	TRISBbits.TRISB5=1; // PGD - JTAG 
