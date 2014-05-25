@@ -1618,6 +1618,22 @@ Trame AnalyseTrame(Trame t)
 		case CMD_PRD_ENVOI_POSITION:
 			prd_envoi_position = 10*(unsigned int)t.message[2];
 			break;
+		case CMD_ACTIONNEUR_ONOFF:
+			switch (t.message[2])
+			{
+				case ID_ACTIONNEUR_LANCE:
+					if(t.message[3]==1)
+					{
+						LATAbits.LATA3=1;
+						LATBbits.LATB0=1;
+					}
+					else
+					{
+						LATAbits.LATA3=0;
+						LATBbits.LATB0=0;
+					}	
+					break;
+			}	
 	}
 	return retour;
 }
