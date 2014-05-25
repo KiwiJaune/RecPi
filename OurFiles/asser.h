@@ -5,9 +5,9 @@
 #define DEFAULT_KD		100						// Coefficient derive
 #define CODEUR			1024 					// Nombre de pas par tour moteur (sans le ratio x4)
 #define REDUCTEUR		1						// Reducteur utilise en sortie d'arbre moteur (=1 si roue codeuse indépendante)
-#define DIAMETRE_ROUE 	54						// Diametre de la roue motrice (ou roue codeuse si indépendante) en mm 
+#define DIAMETRE_ROUE 	51.26395317708874						// Diametre de la roue motrice (ou roue codeuse si indépendante) en mm 
 #define PI 				3.1415926535897932384	// Ben pi quoi
-#define VOIE			190 			// Distance entre les deux roues en mm
+#define VOIE			178.2260449663704		// Distance entre les deux roues en mm
 #define COEFF_ROUE		1.000000				// Coeff d'ajustement pour le diametre de la roue
 #define MM_SCALER		COEFF_ROUE*DIAMETRE_ROUE*PI/(4*CODEUR*REDUCTEUR) // Formule de conversion [pas]<==>[mm]
 #define MM_INVSCALER	4*CODEUR*REDUCTEUR/(COEFF_ROUE*DIAMETRE_ROUE*PI)

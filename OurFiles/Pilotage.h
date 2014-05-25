@@ -318,4 +318,4 @@ Trame AnalyseTrame(Trame t);
 
 // Actionneurs onOff
 #define CMD_ACTIONNEUR_ONOFF			0x65
-#define ID_ACTIONNEUR_LANCE					0x20
+#define ID_ACTIONNEUR_LANCE				0x20
