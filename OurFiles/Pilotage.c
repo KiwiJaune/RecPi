@@ -67,6 +67,7 @@ unsigned int Cpt_Tmr_Periode = 0;
 
 //Variable Servo Filet
 unsigned int Periode_Filet = 312;
+unsigned int Periode_Tissu = 312;
 
 
 void delay(void)
@@ -159,6 +160,7 @@ void Init_Servos(void)
 	PiloteServoEnvoiPosistionCible(4,0);
 	PiloteServoEnvoiPosistionCible(16,0);
 	Filet_Position(INIT_SERVO_FILET);
+	Tissu_Position(INIT_SERVO_TISSU);
 }
 
 //Initalisation Alimentation
@@ -277,12 +279,16 @@ void Assiette_Position(unsigned int vitesse)
 {	
 	Periode_Assiette = vitesse;
 }
-
+//Value range 312(0.5ms) <--> 624(2.0ms)
 void Filet_Position(unsigned int position)
 {	
 	Periode_Filet = position;	
 }
-
+//Value range 312(0.5ms) <--> 624(2.0ms)
+void Tissu_Position(unsigned int position)
+{	
+	Periode_Tissu = position;	
+}
 
 
 //Function generates PWM through Timer 2 ISR, induced every 3.2us
@@ -305,10 +311,15 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 	{
 		SIGNAL_SERVO_FILET = FALLING_EDGE;		
 	}
-	
+
+	if(Cpt_Tmr_Periode == Periode_Tissu)
+	{
+		SIGNAL_SERVO_TISSU = FALLING_EDGE;		
+	}	
 	if(Cpt_Tmr_Periode == CPT_PERIODE_20MS)
 	{
 		SIGNAL_SERVO_FILET = RISING_EDGE;
+		SIGNAL_SERVO_TISSU = RISING_EDGE;
 	
 		TMR5 = 0; 					
 		PR5  = Periode_Canon; 			
@@ -1392,6 +1403,13 @@ Trame AnalyseTrame(Trame t)
 					if(!(t.message[3]*256 + t.message[4]))
 						param1 = 0;
 					Filet_Position(param1);
+				break;
+				
+				case ID_SERVO_TISSU:
+					param1 = t.message[3] * 256 + t.message[4]+312;
+					if(!(t.message[3]*256 + t.message[4]))
+						param1 = 0;
+					Tissu_Position(param1);
 				break;
 			}
 		break;		

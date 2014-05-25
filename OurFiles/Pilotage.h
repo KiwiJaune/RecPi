@@ -48,10 +48,15 @@ int Coupure(void);
 #define ON  1
 #define OFF 0
 
-// SERVO GS
+// SERVO GS FILET
 #define ID_SERVO_FILET 0x32
 #define INIT_SERVO_FILET 412
 #define SIGNAL_SERVO_FILET LATCbits.LATC7
+
+//SERVO GS TENSION TISSU
+#define ID_SERVO_TISSU 0x33
+#define INIT_SERVO_TISSU 624
+#define SIGNAL_SERVO_TISSU LATCbits.LATC6
 
 #define BRAS_DEPLOYE 145
 #define BRAS_RETRACTE 280
@@ -102,6 +107,7 @@ void Canon_Vitesse(unsigned int vitesse);
 void Aspirateur_Vitesse(unsigned int vitesse);
 void Assiette_Position(unsigned int vitesse);
 void Filet_Position(unsigned int position);
+void Tissu_Position(unsigned int position);
 
 void Commande_Pompe(unsigned char Etat_Pompe);
 unsigned int Send_Variable_Capteur_Couleur(void);
