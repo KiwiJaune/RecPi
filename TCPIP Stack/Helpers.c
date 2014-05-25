@@ -765,38 +765,38 @@ void uitoa(WORD Value, BYTE* Buffer)
   Returns:
   	None
   ***************************************************************************/
-// HI-TECH PICC-18 PRO 9.63 already has a ultoa() library function
-#if !defined(__18CXX) && !defined(HI_TECH_C)
-void ultoa(DWORD Value, BYTE* Buffer)
-{
-	BYTE i;
-	DWORD Digit;
-	DWORD Divisor;
-	BOOL Printed = FALSE;
-
-	if(Value)
-	{
-		for(i = 0, Divisor = 1000000000; i < 10; i++)
-		{
-			Digit = Value/Divisor;
-			if(Digit || Printed)
-			{
-				*Buffer++ = '0' + Digit;
-				Value -= Digit*Divisor;
-				Printed = TRUE;
-			}
-			Divisor /= 10;
-		}
-	}
-	else
-	{
-		*Buffer++ = '0';
-	}
-
-	*Buffer = '\0';
-}
-#endif
-
+//// HI-TECH PICC-18 PRO 9.63 already has a ultoa() library function
+//#if !defined(__18CXX) && !defined(HI_TECH_C)
+//void ultoa(DWORD Value, BYTE* Buffer)
+//{
+//	BYTE i;
+//	DWORD Digit;
+//	DWORD Divisor;
+//	BOOL Printed = FALSE;
+//
+//	if(Value)
+//	{
+//		for(i = 0, Divisor = 1000000000; i < 10; i++)
+//		{
+//			Digit = Value/Divisor;
+//			if(Digit || Printed)
+//			{
+//				*Buffer++ = '0' + Digit;
+//				Value -= Digit*Divisor;
+//				Printed = TRUE;
+//			}
+//			Divisor /= 10;
+//		}
+//	}
+//	else
+//	{
+//		*Buffer++ = '0';
+//	}
+//
+//	*Buffer = '\0';
+//}
+//#endif
+//
 /*****************************************************************************
   Function:
 	BYTE hexatob(WORD_VAL AsciiChars)

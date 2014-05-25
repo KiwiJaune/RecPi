@@ -5,6 +5,10 @@
 #include <math.h>
 #include "CDS5516.h"
 
+//Trame servo
+static Trame trameServo;
+static BYTE msgServo[20];
+
 // ATTENTION /!\ Ces fonctions ne doivent pas être bloquantes
 extern unsigned char bridage;
 extern unsigned int prd_envoi_position;
@@ -60,6 +64,10 @@ unsigned int Valeur_Capteur_Couleur = 24;
 unsigned int Old_IC1Buf = 0;
 
 unsigned int Cpt_Tmr_Periode = 0;
+
+//Variable Servo Filet
+unsigned int Periode_Filet = 312;
+
 
 void delay(void)
 {
@@ -131,6 +139,9 @@ Trame PiloteDebug9(Trame t)
 }
 
 
+
+
+
 //Initialisation des servos moteurs selon les positions suivantes: 
 //Aspirateur/Turbine : Desactive
 //Canon : Desactive
@@ -145,9 +156,9 @@ void Init_Turbine(void)
 //Assiette : Position Haut (0.5ms)
 void Init_Servos(void)
 {
-//	CDS5516EnvoiMessage(19100,ID_SERVO_ASPIRATEUR,BRAS_RETRACTE);
-//	CDS5516EnvoiMessage(19100,ID_SERVO_DEBLOQUEUR,DEBLOQUE_BAS);
-//	Assiette_Position(INIT_ASSIETTE);
+	PiloteServoEnvoiPosistionCible(4,0);
+	PiloteServoEnvoiPosistionCible(16,0);
+	Filet_Position(INIT_SERVO_FILET);
 }
 
 //Initalisation Alimentation
@@ -267,6 +278,13 @@ void Assiette_Position(unsigned int vitesse)
 	Periode_Assiette = vitesse;
 }
 
+void Filet_Position(unsigned int position)
+{	
+	Periode_Filet = position;	
+}
+
+
+
 //Function generates PWM through Timer 2 ISR, induced every 3.2us
 void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 {
@@ -283,22 +301,15 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 		cpt_capteur_vitesse=0;	// Reinitialise le compteur soft
 	}
 
+	if(Cpt_Tmr_Periode == Periode_Filet)
+	{
+		SIGNAL_SERVO_FILET = FALLING_EDGE;		
+	}
 	
-	if(Cpt_Tmr_Periode == Periode_Turbine)
-	{
-		//SIGNAL_TURBINE = FALLING_EDGE;		
-	}
-		
-	if(Cpt_Tmr_Periode == Periode_Assiette)
-	{
-		//SIGNAL_ASSIETTE = FALLING_EDGE;		
-	}
 	if(Cpt_Tmr_Periode == CPT_PERIODE_20MS)
 	{
-		//SIGNAL_ASSIETTE = RISING_EDGE;
-		//SIGNAL_TURBINE  = RISING_EDGE;
-		//SIGNAL_CANON    = RISING_EDGE;
-
+		SIGNAL_SERVO_FILET = RISING_EDGE;
+	
 		TMR5 = 0; 					
 		PR5  = Periode_Canon; 			
 		T5CONbits.TON = 1;
@@ -1373,7 +1384,17 @@ Trame AnalyseTrame(Trame t)
 			else 
 				Shutter_Pos(SHUTTER_PAS_BLOQUE);
 		break;
-	
+		case CMD_MOTEUR_POSITION:
+			switch (t.message[2])
+			{
+				case ID_SERVO_FILET:
+					param1 = t.message[3] * 256 + t.message[4]+312;
+					if(!(t.message[3]*256 + t.message[4]))
+						param1 = 0;
+					Filet_Position(param1);
+				break;
+			}
+		break;		
 		case CMD_SERVOMOTEUR:
 	
 				msgServo[0] = 0xC3;
@@ -1552,36 +1573,12 @@ Trame AnalyseTrame(Trame t)
 						PiloteServoReset(param1);
 						break;
 				}
-//		case CMD_DEMANDE_PRESENCE_BALLE:
-//			return Presence_Balle();
-//		break;
-//
-//		case CMD_DEMANDE_COULEUR:
-//			return Couleur_Balle();
-//		break;
-//
-//		case CMD_POMPE_A_VIDE:
-//			Commande_Pompe(t.message[2]);
-//		break;
-//
-//		case CMD_DEMANDE_MESURE_CANON:	
-//			retour = PiloteMesureCanon();
-//		break;
-//		
-//		case CMD_CONSIGNE_CANON:
-//			consigne_canon= t.message[2] * 256 + t.message[3];
-//			if(consigne_canon==0) Canon_Vitesse(5000);
-//		break;
+				break;
 		
 		case CMD_RESET_CARTE:
 			Reset();
 		break;
-//		case CMD_ARME_JACK:
-//			jackAvant=1;
-//		break;
-//		case CMD_DEMANDE_PRESENCE_JACK:
-//			return Presence_Jack();
-//		break;
+
 		case CMD_CONSIGNE_POSITION:
 			if(t.message[2] == AVANT)
 			{

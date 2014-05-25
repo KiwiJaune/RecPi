@@ -68,7 +68,7 @@ void InitPorts()
 	TRISCbits.TRISC4=0; // SCK1 - Ethernet
 	TRISCbits.TRISC5=1; // SDI1 - Ethernet
 	TRISCbits.TRISC6=0; // servo - Bras drap bouchon
-	TRISCbits.TRISC7=1; //  - 
+	TRISCbits.TRISC7=0; // servo - Canon filet
 	TRISCbits.TRISC8=1; // RX - CDS_AX12
 	TRISCbits.TRISC9=0; // TX - CDS_AX12
 		

@@ -153,8 +153,6 @@ int main(void)
 	Init_Pompe();
 	Init_Input_Capture();
 	Init_Alimentation();
-	InitADC();
-	InitDMA();
 	
 	while(1)
   	{		

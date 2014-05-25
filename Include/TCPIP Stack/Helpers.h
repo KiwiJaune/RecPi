@@ -61,7 +61,7 @@
 		// function, but the parameter list is different!
 		#define ultoa(val,buf)	ultoa((buf),(val),10)
 	#else
-		void ultoa(DWORD Value, BYTE* Buffer);
+//		void ultoa(DWORD Value, BYTE* Buffer);
 	#endif
 #endif
 

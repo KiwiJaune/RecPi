@@ -48,6 +48,11 @@ int Coupure(void);
 #define ON  1
 #define OFF 0
 
+// SERVO GS
+#define ID_SERVO_FILET 0x32
+#define INIT_SERVO_FILET 412
+#define SIGNAL_SERVO_FILET LATCbits.LATC7
+
 #define BRAS_DEPLOYE 145
 #define BRAS_RETRACTE 280
 
@@ -96,6 +101,7 @@ void Init_Pompe(void);
 void Canon_Vitesse(unsigned int vitesse);
 void Aspirateur_Vitesse(unsigned int vitesse);
 void Assiette_Position(unsigned int vitesse);
+void Filet_Position(unsigned int position);
 
 void Commande_Pompe(unsigned char Etat_Pompe);
 unsigned int Send_Variable_Capteur_Couleur(void);
@@ -123,10 +129,6 @@ int PiloteRecallage(Sens s);
 int PiloteAvancerEtapes(int nombreEtapes, Etape etape);
 int PiloteValiderEtapes(int numEtape);
 int PiloteOffsetAsserv(int x, int y, int teta);
-
-//Trame servo
-static Trame trameServo;
-static BYTE msgServo[20];
 
 // SERVOMOTEURS
 Trame PiloteServoDemandeBaudrate(char id);
@@ -304,3 +306,6 @@ Trame AnalyseTrame(Trame t);
 #define CMD_DEMANDE_PRESENCE_JACK		0xF3
 #define CMD_REPONSE_PRESENCE_JACK		0xF4
 #define CMD_REPONSE_ECHO				0xF5
+
+// Actionneurs moteur
+#define CMD_MOTEUR_POSITION				0x66
