@@ -392,7 +392,7 @@ unsigned char Motors_Task(void)
 			motion[i] = MOTION_RUN; // mouvement par défaut
 			if(sens[i])
 			{
-				if((targ_pos[i]-real_pos[i]) < distance_restante) // faut-il freiner ?
+				if((targ_pos[i]-cons_pos[i]) < distance_restante) // faut-il freiner ?
 					motion[i] = MOTION_DECEL;				
 				else if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
 					motion[i] = MOTION_ACCEL;
@@ -401,7 +401,7 @@ unsigned char Motors_Task(void)
 			}
 			else
 			{
-				if((real_pos[i]-targ_pos[i]) < distance_restante) // faut-il freiner ?
+				if((cons_pos[i]-targ_pos[i]) < distance_restante) // faut-il freiner ?
 					motion[i] = MOTION_DECEL;				
 				else if(speed[i] < speed_def[i]) // est ce qu'il faut accélérer ?
 					motion[i] = MOTION_ACCEL;
