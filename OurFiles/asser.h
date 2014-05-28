@@ -1,8 +1,8 @@
 
 #define N				2						// Nombre de moteurs
-#define DEFAULT_KP		5						// Coefficient proporionnel 
+#define DEFAULT_KP		10						// Coefficient proporionnel 
 #define DEFAULT_KI		0						// Coefficient integral (inverse !)
-#define DEFAULT_KD		20						// Coefficient derive
+#define DEFAULT_KD		30						// Coefficient derive
 #define CODEUR			1024 					// Nombre de pas par tour moteur (sans le ratio x4)
 #define REDUCTEUR		1						// Reducteur utilise en sortie d'arbre moteur (=1 si roue codeuse indépendante)
 #define DIAMETRE_ROUE 	51.26395317708874						// Diametre de la roue motrice (ou roue codeuse si indépendante) en mm 
@@ -97,7 +97,7 @@ void Motors_Start(unsigned char moteur);
 void GotoXY(double x, double y, unsigned char reculer);
 unsigned char Motor_Task(void);
 void set_pid(double * coeffs);
-double pid(unsigned char power, double * targ_pos,double * real_pos);
+unsigned char pid(unsigned char power, double * targ_pos,double * real_pos);
 char pwm(unsigned char motor, double valeur);
 //double _abs(double value);
 void Calage(unsigned char reculer);

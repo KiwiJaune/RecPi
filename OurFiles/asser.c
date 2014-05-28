@@ -8,6 +8,7 @@ static double speed[N]={0},accel[N];
 double cor_moy[N][MOYENNE_GLISSANTE_CORRECTEUR];
 unsigned char cpt_sature[N],bridage=0,ptr_cor_moy[N];	
 unsigned char flag_ligne;
+unsigned int saturation_pos[N]={0},saturation_neg[N]={0};
 unsigned char first[N];
 double kp[N],ki[N],kd[N];
 int revolutions[N];
@@ -361,7 +362,13 @@ unsigned char Motors_Task(void)
 	pos_y   += delta_y;
 	lcurvi_old = lcurvi;
 	
-	motors_ok=pid(1,cons_pos,real_pos); // 150µs Max
+	if(pid(1,cons_pos,real_pos)==1) // 150µs Max retourne 1 en cas de saturation hacheur
+	{
+		Stop(FREELY);
+		retour = FLAG_BLOCAGE;
+		return retour;
+	}
+	
 
 	for(i=0;i<N;i++) 
 	{
@@ -505,7 +512,7 @@ void set_pid(double *coeffs)
 
 
 // Calcul PID a reiterer a chaque milliseconde
-double pid(unsigned char power,double * targ_pos,double * real_pos)
+unsigned char pid(unsigned char power,double * targ_pos,double * real_pos)
 {
 	unsigned char i,j;
 	double cor[N];
@@ -582,6 +589,40 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 			for(j=0;j<MOYENNE_GLISSANTE_CORRECTEUR;j++)
 				cor[i] += cor_moy[i][j];
 			cor[i]=cor[i]/MOYENNE_GLISSANTE_CORRECTEUR;
+
+						if(cor[i] > 2000)
+			{
+				saturation_pos[i]+=5;
+			}
+			else if(saturation_pos[i]>0)
+			{
+				saturation_pos[i]--;
+			}
+			if(cor[i] < -2000)
+			{
+				saturation_neg[i]+=5;
+			}
+			else if(saturation_neg[i]>0)
+			{	
+				saturation_neg[i]--;
+			}
+			
+			if(motiontype == 3)			
+			{
+				saturation_pos[0]=0;
+				saturation_neg[0]=0;
+				saturation_pos[1]=0;
+				saturation_neg[1]=0;
+			}
+
+			if((saturation_pos[i]>3000)||(saturation_neg[i]>3000))
+			{
+				saturation_pos[0]=0;
+				saturation_neg[0]=0;
+				saturation_pos[1]=0;
+				saturation_neg[1]=0;
+				return 1;
+			}
 		}
 		pwm(GAUCHE,cor[0]);
 		pwm(DROITE,cor[1]);
@@ -598,7 +639,7 @@ double pid(unsigned char power,double * targ_pos,double * real_pos)
 	buff_status[2][buff_status_ptr++] = (unsigned int)cor[1];
 	if(buff_status_ptr>63) buff_status_ptr=0;
 	
-	return fabs(cor[0]) + fabs(cor[1]);
+	return 0;
 }
 
 char pwm(unsigned char motor, double valeur) // Value = +/- 4000
@@ -619,6 +660,10 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 		if(value >  2200) value =  2200;
 		if(value < -2200) value = -2200;	
 	}*/
+
+	// bridage Hard pour le petit robot
+	if(value >  2000) value =  2000;
+	if(value < -2000) value = -2000;	
 
 	value = -value;
 
