@@ -42,6 +42,8 @@ extern double cons_pos[N];
 extern double real_pos[N];
 extern unsigned char scan;
 
+unsigned int Cpt_20ms=0;
+
 unsigned char flag_envoi_position;
 unsigned int prd_envoi_position = 100;
 
@@ -158,27 +160,33 @@ int main(void)
 	
 	while(1)
   	{		
-	  	if(flag_envoi) 
+	  	Cpt_20ms=0;
+		while(Cpt_20ms<2);
+		
+		if(flag_envoi) 
 		{	
 			scan=0;
 			EnvoiUserUdp(envoiFin,1);
 			flag_envoi = 0;
 		}
-		if(flag_blocage)
+		else if(flag_blocage)
 		{
 			EnvoiUserUdp(envoiBlocage,1);
 			flag_blocage = 0;
 		}
-		if(flag_calage)
+		else if(flag_calage)
 		{
 			EnvoiUserUdp(envoiCalage,1);
 			flag_calage = 0;
 		}
-		if(flag_envoi_position)
+		else if(flag_envoi_position)
 		{
 			EnvoiUserUdp(PilotePositionXYT(),0);
 			flag_envoi_position = 0;
 		}
+
+		Cpt_20ms=0;
+		while(Cpt_20ms<2);
 		
 
 		StackTask();
@@ -187,7 +195,7 @@ int main(void)
 		{
 			trame = AnalyseTrame(trame);
 			if(trame.message[0] == 0xC3)
-				EnvoiUserUdp(trame,0);
+				EnvoiUserUdp(trame,1);
 		}
         StackApplications();
 

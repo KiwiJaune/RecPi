@@ -48,7 +48,7 @@ extern double erreur_allowed;
 extern unsigned char flag_capteur_vitesse;
 
 unsigned char scan;
-
+extern unsigned int Cpt_20ms;
 //Extern Capteur Couleur
 extern unsigned int Tab_Capteur_Couleur[8];
 
@@ -324,7 +324,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T2Interrupt(void)
 		TMR5 = 0; 					
 		PR5  = Periode_Canon; 			
 		T5CONbits.TON = 1;
-
+		Cpt_20ms++;
 		Cpt_Tmr_Periode = 0;
 	}
 	IFS0bits.T2IF = 0; 		//Clear Timer1 Interrupt flag
