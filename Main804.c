@@ -45,7 +45,7 @@ extern unsigned char scan;
 unsigned int Cpt_20ms=0;
 
 unsigned char flag_envoi_position;
-unsigned int prd_envoi_position = 100;
+unsigned int prd_envoi_position = 100,cpt_delay=0;
 
 unsigned char jackAvant = 0,trame_recu[20],recu_nbr,timeout_servo;
 unsigned char motor_flag=0,datalogger_blocker=0;
@@ -166,7 +166,11 @@ int main(void)
 		if(flag_envoi) 
 		{	
 			scan=0;
+			cpt_delay=0;
+			while(cpt_delay<300);
 			EnvoiUserUdp(envoiFin,1);
+			cpt_delay=0;
+			while(cpt_delay<100);
 			flag_envoi = 0;
 		}
 		else if(flag_blocage)
@@ -410,6 +414,8 @@ void __attribute__ ((interrupt, no_auto_psv)) _T4Interrupt(void)
 	static unsigned int puissance;
 	static unsigned char etat_canon=0;	
 	static double vitesse_canon_brut;
+
+	if(cpt_delay<10000)	cpt_delay++;
 
 	timeout_servo++;
 
