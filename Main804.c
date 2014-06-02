@@ -45,7 +45,7 @@ extern unsigned char scan;
 unsigned int Cpt_20ms=0;
 
 unsigned char flag_envoi_position;
-unsigned int prd_envoi_position = 100,cpt_delay=0;
+unsigned int prd_envoi_position = 100;
 
 unsigned char jackAvant = 0,trame_recu[20],recu_nbr,timeout_servo;
 unsigned char motor_flag=0,datalogger_blocker=0;

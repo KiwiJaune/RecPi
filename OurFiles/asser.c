@@ -8,8 +8,7 @@ static double speed[N]={0},accel[N];
 double cor_moy[N][MOYENNE_GLISSANTE_CORRECTEUR];
 unsigned char cpt_sature[N],bridage=0,ptr_cor_moy[N];	
 unsigned char flag_ligne;
-unsigned int saturation_pos[N]={0},saturation_neg[N]={0};
-unsigned char first[N];
+unsigned int saturation_pos[N]={0},saturation_neg[N]={0};unsigned char first[N];
 double kp[N],ki[N],kd[N];
 int revolutions[N];
 unsigned char kd_cancel;
@@ -512,7 +511,7 @@ void set_pid(double *coeffs)
 
 
 // Calcul PID a reiterer a chaque milliseconde
-unsigned char pid(unsigned char power,double * targ_pos,double * real_pos)
+double pid(unsigned char power,double * targ_pos,double * real_pos)
 {
 	unsigned char i,j;
 	double cor[N];
@@ -589,7 +588,6 @@ unsigned char pid(unsigned char power,double * targ_pos,double * real_pos)
 			for(j=0;j<MOYENNE_GLISSANTE_CORRECTEUR;j++)
 				cor[i] += cor_moy[i][j];
 			cor[i]=cor[i]/MOYENNE_GLISSANTE_CORRECTEUR;
-
 						if(cor[i] > 2000)
 			{
 				saturation_pos[i]+=5;
@@ -622,7 +620,7 @@ unsigned char pid(unsigned char power,double * targ_pos,double * real_pos)
 				saturation_pos[1]=0;
 				saturation_neg[1]=0;
 				return 1;
-			}
+			}		
 		}
 		pwm(GAUCHE,cor[0]);
 		pwm(DROITE,cor[1]);
@@ -664,7 +662,6 @@ char pwm(unsigned char motor, double valeur) // Value = +/- 4000
 	// bridage Hard pour le petit robot
 	if(value >  2000) value =  2000;
 	if(value < -2000) value = -2000;	
-
 	value = -value;
 
 	if(motor==DROITE)
